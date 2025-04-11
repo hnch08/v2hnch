@@ -13,6 +13,13 @@
   "info": {
     "companyName": "hnch",
     "productName": "v2hnch",
-    "productVersion": "0.0.1"
+    "productVersion": "0.0.1",
+    "protocols": [
+      {
+        "scheme": "v2hnch",
+        "description": "v2hnch Protocol",
+        "role": "Editor"
+      }
+    ]
   }
 }

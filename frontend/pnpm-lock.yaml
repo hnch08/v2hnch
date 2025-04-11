@@ -15,15 +15,18 @@ importers:
       '@babel/types':
         specifier: ^7.18.10
         version: 7.27.0
+      '@types/node':
+        specifier: ^22.14.0
+        version: 22.14.0
       '@vitejs/plugin-vue':
         specifier: ^3.0.3
-        version: 3.2.0(vite@3.2.11)(vue@3.5.13(typescript@4.9.5))
+        version: 3.2.0(vite@3.2.11(@types/node@22.14.0))(vue@3.5.13(typescript@4.9.5))
       typescript:
         specifier: ^4.6.4
         version: 4.9.5
       vite:
         specifier: ^3.0.7
-        version: 3.2.11
+        version: 3.2.11(@types/node@22.14.0)
       vue-tsc:
         specifier: ^1.8.27
         version: 1.8.27(typescript@4.9.5)
@@ -61,6 +64,9 @@ packages:
 
   '@jridgewell/sourcemap-codec@1.5.0':
     resolution: {integrity: sha512-gv3ZRaISU3fjPAgNsriBRqGWQL6quFx04YMPW/zD8XMLsU32mhCCbfbO6KZFLjvYpCZ8zyDEgqsgf+PwPaM7GQ==}
+
+  '@types/node@22.14.0':
+    resolution: {integrity: sha512-Kmpl+z84ILoG+3T/zQFyAJsU6EPTmOCj8/2+83fSN6djd6I4o7uOuGIH6vq3PrjY5BGitSbFuMN18j3iknubbA==}
 
   '@vitejs/plugin-vue@3.2.0':
     resolution: {integrity: sha512-E0tnaL4fr+qkdCNxJ+Xd0yM31UwMkQje76fsDVBBUCoGOUPexu2VDUYHL8P4CwV+zMvWw6nlRw19OnRKmYAJpw==}
@@ -338,6 +344,9 @@ packages:
     engines: {node: '>=4.2.0'}
     hasBin: true
 
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+
   vite@3.2.11:
     resolution: {integrity: sha512-K/jGKL/PgbIgKCiJo5QbASQhFiV02X9Jh+Qq0AKCRCRKZtOTVi4t6wh75FDpGf2N9rYOnzH87OEFQNaFy6pdxQ==}
     engines: {node: ^14.18.0 || >=16.0.0}
@@ -403,9 +412,13 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.5.0': {}
 
-  '@vitejs/plugin-vue@3.2.0(vite@3.2.11)(vue@3.5.13(typescript@4.9.5))':
+  '@types/node@22.14.0':
     dependencies:
-      vite: 3.2.11
+      undici-types: 6.21.0
+
+  '@vitejs/plugin-vue@3.2.0(vite@3.2.11(@types/node@22.14.0))(vue@3.5.13(typescript@4.9.5))':
+    dependencies:
+      vite: 3.2.11(@types/node@22.14.0)
       vue: 3.5.13(typescript@4.9.5)
 
   '@volar/language-core@1.11.1':
@@ -647,13 +660,16 @@ snapshots:
 
   typescript@4.9.5: {}
 
-  vite@3.2.11:
+  undici-types@6.21.0: {}
+
+  vite@3.2.11(@types/node@22.14.0):
     dependencies:
       esbuild: 0.15.18
       postcss: 8.5.3
       resolve: 1.22.10
       rollup: 2.79.2
     optionalDependencies:
+      '@types/node': 22.14.0
       fsevents: 2.3.3
 
   vue-template-compiler@2.7.16:
