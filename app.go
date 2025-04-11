@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"v2hnch/pkg/config"
+	"v2hnch/pkg/server"
 
 	"github.com/energye/systray"
 
@@ -28,8 +30,10 @@ func (a *App) startup(ctx context.Context) {
 
 	runtime.WindowSetSize(ctx, 400, 600)
 	runtime.WindowCenter(ctx)
-
 	runtime.WindowSetTitle(ctx, "v2hnch")
+
+	Conf = config.GetConfig()
+	fmt.Println(Conf)
 
 	systemTray := func() {
 		// systray.SetIcon([]byte()) // read the icon from a file
@@ -40,10 +44,12 @@ func (a *App) startup(ctx context.Context) {
 		systray.SetIcon(iconBytes)
 		systray.SetTooltip("创合智能")
 		show := systray.AddMenuItem("Show", "Show The Window")
+		toggle := systray.AddMenuItem("Toggle", "Toggle The Window")
 		systray.AddSeparator()
 		exit := systray.AddMenuItem("Exit", "Quit The Program")
 
 		show.Click(func() { runtime.WindowShow(a.ctx) })
+		toggle.Click(server.Toggle)
 		exit.Click(func() { os.Exit(0) })
 
 		systray.SetOnClick(func(menu systray.IMenu) { runtime.WindowShow(a.ctx) })
@@ -62,6 +68,7 @@ func (a *App) Login(username, password string) bool {
 	// 这里添加实际的登录验证逻辑
 	// 示例中使用简单的判断，实际应用中应该使用更安全的方式
 	if username == "admin" && password == "password" {
+		config.SetValue("username", username)
 		return true
 	}
 	return false

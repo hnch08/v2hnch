@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"os"
+	"v2hnch/pkg/config"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -14,6 +15,8 @@ import (
 //go:embed all:frontend/dist favicon.ico
 var assets embed.FS
 
+var Conf *config.Config
+
 func main() {
 	// Create an instance of the app structure
 	app := NewApp()
@@ -22,7 +25,6 @@ func main() {
 	if len(argsWithoutProg) > 0 {
 		fmt.Println("argsWithoutProg:", argsWithoutProg)
 	}
-
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:  "v2hnch",
