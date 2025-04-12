@@ -12,7 +12,7 @@ export function HideWindow():Promise<void>;
 
 export function Quit():Promise<void>;
 
-export function SetAddress(arg1:string):Promise<void>;
+export function SetAddress(arg1:string):Promise<boolean>;
 
 export function ShowWindow():Promise<void>;
 

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sync"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -21,39 +22,46 @@ func init() {
 	ConfigFile = filepath.Join(ConfigDir, "config.json")
 }
 
+var instance *Config
+var once sync.Once
+
 func GetConfig() *Config {
-	config := &Config{}
-	fmt.Println(ConfigFile)
-	// 确保配置目录存在
-	if _, err := os.Stat(ConfigDir); os.IsNotExist(err) {
-		err = os.MkdirAll(ConfigDir, 0755)
+	once.Do(func() {
+		instance = &Config{}
+		fmt.Println(ConfigFile)
+		// 确保配置目录存在
+		if _, err := os.Stat(ConfigDir); os.IsNotExist(err) {
+			err = os.MkdirAll(ConfigDir, 0755)
+			if err != nil {
+				fmt.Printf("创建配置目录失败: %v\n", err)
+				return
+			}
+		}
+
+		// 确保配置文件存在
+		if _, err := os.Stat(ConfigFile); os.IsNotExist(err) {
+			defaultConfig := &Config{
+				Username:   "",
+				Name:       "",
+				RequestURL: "",
+			}
+			err = Write(defaultConfig)
+			if err != nil {
+				fmt.Printf("写入默认配置失败: %v\n", err)
+				return
+			}
+		}
+
+		config, err := Read()
 		if err != nil {
-			fmt.Printf("创建配置目录失败: %v\n", err)
-			return config
+			fmt.Printf("读取配置失败: %v\n", err)
+			instance = &Config{}
+			return
 		}
-	}
+		instance = config
+	})
 
-	// 确保配置文件存在
-	if _, err := os.Stat(ConfigFile); os.IsNotExist(err) {
-		defaultConfig := &Config{
-			Username:   "",
-			Name:       "",
-			RequestURL: "",
-		}
-		err = Write(defaultConfig)
-		if err != nil {
-			fmt.Printf("写入默认配置失败: %v\n", err)
-			return config
-		}
-	}
-
-	config, err := Read()
-	if err != nil {
-		fmt.Printf("读取配置失败: %v\n", err)
-		return &Config{}
-	}
-
-	return config
+	return instance
 }
 
 type Config struct {
@@ -75,7 +83,7 @@ func Write(config *Config) error {
 	if err != nil {
 		return fmt.Errorf("写入配置文件失败: %v", err)
 	}
-
+	fmt.Println("写入配置文件成功")
 	return nil
 }
 
@@ -98,6 +106,7 @@ func Read() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("解析配置文件失败: %v", err)
 	}
+	fmt.Println("config:", config)
 
 	return config, nil
 }

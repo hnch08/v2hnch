@@ -2,8 +2,8 @@ package main
 
 import (
 	"embed"
-	"fmt"
 	"os"
+	"strings"
 	"v2hnch/pkg/config"
 
 	"github.com/wailsapp/wails/v2"
@@ -15,15 +15,21 @@ import (
 //go:embed all:frontend/dist favicon.ico
 var assets embed.FS
 
-var Conf *config.Config
-
 func main() {
 	// Create an instance of the app structure
 	app := NewApp()
 
 	argsWithoutProg := os.Args[1:]
 	if len(argsWithoutProg) > 0 {
-		fmt.Println("argsWithoutProg:", argsWithoutProg)
+		// 去掉开头的协议和结尾的/
+		arg_string := strings.TrimPrefix(argsWithoutProg[0], "v2hnch://")
+		arg_string = strings.TrimSuffix(arg_string, "/")
+		args := strings.SplitN(arg_string, "_", 2)
+
+		conf := config.GetConfig()
+		conf.Username = args[0]
+		conf.Name = args[1]
+		config.Write(conf)
 	}
 	// Create application with options
 	err := wails.Run(&options.App{

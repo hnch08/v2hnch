@@ -30,8 +30,8 @@ func (a *App) startup(ctx context.Context) {
 
 	a.StartProxy()
 
-	Conf = config.GetConfig()
-	if Conf.RequestURL == "" {
+	conf := config.GetConfig()
+	if conf.RequestURL == "" {
 		a.ShowWindow()
 	}
 
@@ -72,18 +72,20 @@ func (a *App) GetConfig() *config.Config {
 	return config.GetConfig()
 }
 
-func (a *App) SetAddress(address string) {
+func (a *App) SetAddress(address string) bool {
 	url := fmt.Sprintf("http://%s:3060/api/health", address)
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Printf("请求失败: %v\n", err)
-		return
+		return false
 	}
 	defer resp.Body.Close()
 	fmt.Println(resp)
-	config.Write(&config.Config{
-		RequestURL: address,
-	})
+	conf := config.GetConfig()
+	conf.RequestURL = address
+	conf.Username = conf.Username + "1"
+	config.Write(conf)
+	return true
 }
 
 func (a *App) GetStatus() int {

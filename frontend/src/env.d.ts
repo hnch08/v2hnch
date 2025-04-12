@@ -10,7 +10,7 @@ declare interface Window {
         Quit: () => Promise<void>;
         StartProxy: () => Promise<boolean>;
         StopProxy: () => Promise<boolean>;
-        SetAddress: (address: string) => Promise<void>;
+        SetAddress: (address: string) => Promise<boolean>;
         GetConfig: () => Promise<config.Config>;
         GetStatus: () => Promise<number>;
       }

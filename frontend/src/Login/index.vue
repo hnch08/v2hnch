@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import cinput from './input.vue'
 import Connected from '../Connected/index.vue'
 import Logo from '../assets/images/logochzn.png'
@@ -8,14 +8,23 @@ const connectStatus = ref(1)
 const emit = defineEmits(['changeConnectStatus'])
 const handleConnect = async (ipAddress: string) => {
     try {
+        const result = await window.go.main.App.SetAddress(ipAddress)
+        if (!result) {
+            throw new Error('连接失败，请重试')
+        }
         connectStatus.value = 2
-        window.go.main.App.SetAddress(ipAddress)
         // emit('changeConnectStatus', 2)
     } catch (err) {
-        errorMessage.value = '连接失败，请重试'
+        errorMessage.value = '连接失败，请检查IP地址是否正确'
     }
 }
+const changeConnectStatus = (status: number) => {
+    connectStatus.value = status
+}
 
+onMounted(async () => {
+    errorMessage.value = ""
+})
 </script>
 
 <template>
@@ -25,7 +34,7 @@ const handleConnect = async (ipAddress: string) => {
             </div>
             <div class="input-group">
                 <cinput v-if="connectStatus === 1" @connect="handleConnect" />
-                <Connected v-if="connectStatus === 2" />
+                <Connected v-if="connectStatus === 2" @changeConnectStatus="changeConnectStatus" />
             </div>
             <div v-if="errorMessage" class="error-message">
                 {{ errorMessage }}

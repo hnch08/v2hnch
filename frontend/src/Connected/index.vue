@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
 import UserInfo from './UserInfo.vue'
-
+const emit = defineEmits(['changeConnectStatus'])
 const userInfo = ref({
     phoneNumber: '138****8888',
     nickname: '张三',
@@ -27,37 +27,50 @@ const toggleProxy = async () => {
     loading.value = false
 }
 
+
+const disconnect = () => {
+    // console.log('断开连接')
+    emit('changeConnectStatus', 1)
+}
+
+onMounted(async () => {
+    const status = await window.go.main.App.GetStatus()
+    const config = await window.go.main.App.GetConfig()
+    proxyEnabled.value = status === 1
+    userInfo.value.phoneNumber = config.username
+    userInfo.value.nickname = config.name
+})
 </script>
 
 <template>
 
-        <div class="card">
-            <!-- 顶部用户信息和连接状态 -->
-            <div class="header">
-                <div class="user-info">
-                    <UserInfo :userInfo="userInfo" />
-                </div>
-            </div>
-
-            <!-- 中间代理状态 -->
-            <div class="proxy-status">
-                <div class="status-icon" :class="{ active: proxyEnabled }">
-                    <i class="status-dot"></i>
-                </div>
-                <div class="status-text">{{ proxyEnabled ? '代理已开启' : '代理未开启' }}</div>
-            </div>
-
-            <!-- 底部开关按钮 -->
-            <div class="footer">
-                <div class="toggle-switch" @click="toggleProxy" :class="{ active: proxyEnabled }">
-                    <div class="toggle-button"></div>
-                </div>
+    <div class="card">
+        <!-- 顶部用户信息和连接状态 -->
+        <div class="header">
+            <div class="user-info">
+                <UserInfo :userInfo="userInfo" />
+                <span @click="disconnect" class="disconnect-btn">断开连接</span>
             </div>
         </div>
+
+        <!-- 中间代理状态 -->
+        <div class="proxy-status">
+            <div class="status-icon" :class="{ active: proxyEnabled }">
+                <i class="status-dot"></i>
+            </div>
+            <div class="status-text">{{ proxyEnabled ? '代理已开启' : '代理未开启' }}</div>
+        </div>
+
+        <!-- 底部开关按钮 -->
+        <div class="footer">
+            <div class="toggle-switch" @click="toggleProxy" :class="{ active: proxyEnabled }">
+                <div class="toggle-button"></div>
+            </div>
+        </div>
+    </div>
 </template>
 
 <style scoped>
-
 .card {
     background: white;
     width: 300px;
@@ -65,6 +78,12 @@ const toggleProxy = async () => {
     border-radius: 16px;
     padding: 20px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.disconnect-btn {
+    color: #c73434;
+    font-size: 14px;
+    cursor: pointer;
 }
 
 .header {
@@ -75,7 +94,9 @@ const toggleProxy = async () => {
 }
 
 .user-info {
+    width: 100%;
     display: flex;
+    justify-content: space-between;
     align-items: center;
     gap: 12px;
     height: 46px;

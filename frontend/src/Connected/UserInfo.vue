@@ -12,9 +12,9 @@
             </div>
         </div>
         <div class="notice-content">
-            <div class="username">15116007223</div>
-            <div class="lable-message">15116007223</div>
-            <div class="user-id">eneo</div>
+            <div class="username">{{ userInfo.phoneNumber }}</div>
+            <div class="lable-message">{{ userInfo.nickname }}</div>
+            <div class="user-id">{{ userInfo.nickname }}</div>
         </div>
     </button>
 </template>
