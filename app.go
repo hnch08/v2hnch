@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
+	"net/http"
 	"v2hnch/pkg/config"
 	"v2hnch/pkg/server"
 
@@ -28,12 +28,12 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
-	runtime.WindowSetSize(ctx, 400, 600)
-	runtime.WindowCenter(ctx)
-	runtime.WindowSetTitle(ctx, "v2hnch")
+	a.StartProxy()
 
 	Conf = config.GetConfig()
-	fmt.Println(Conf)
+	if Conf.RequestURL == "" {
+		a.ShowWindow()
+	}
 
 	systemTray := func() {
 		// systray.SetIcon([]byte()) // read the icon from a file
@@ -48,14 +48,19 @@ func (a *App) startup(ctx context.Context) {
 		systray.AddSeparator()
 		exit := systray.AddMenuItem("Exit", "Quit The Program")
 
-		show.Click(func() { runtime.WindowShow(a.ctx) })
-		toggle.Click(server.Toggle)
-		exit.Click(func() { os.Exit(0) })
+		show.Click(func() { a.ShowWindow() })
+		toggle.Click(func() { a.toggleProxy() })
+		exit.Click(func() { a.Quit() })
 
-		systray.SetOnClick(func(menu systray.IMenu) { runtime.WindowShow(a.ctx) })
+		systray.SetOnClick(func(menu systray.IMenu) { a.ShowWindow() })
 		systray.SetOnRClick(func(menu systray.IMenu) { menu.ShowMenu() })
 	}
 	systray.Run(systemTray, func() {})
+}
+
+func (a *App) beforeClose(ctx context.Context) bool {
+	a.StopProxy()
+	return false
 }
 
 // Greet returns a greeting for the given name
@@ -63,19 +68,53 @@ func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
 }
 
-// Login 处理登录请求
-func (a *App) Login(username, password string) bool {
-	// 这里添加实际的登录验证逻辑
-	// 示例中使用简单的判断，实际应用中应该使用更安全的方式
-	if username == "admin" && password == "password" {
-		config.SetValue("username", username)
-		return true
+func (a *App) GetConfig() *config.Config {
+	return config.GetConfig()
+}
+
+func (a *App) SetAddress(address string) {
+	url := fmt.Sprintf("http://%s:3060/api/health", address)
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Printf("请求失败: %v\n", err)
+		return
 	}
-	return false
+	defer resp.Body.Close()
+	fmt.Println(resp)
+	config.Write(&config.Config{
+		RequestURL: address,
+	})
+}
+
+func (a *App) GetStatus() int {
+	return config.GetStatus()
+}
+
+func (a *App) StartProxy() bool {
+	return a.toggleProxy(config.StatusActive)
+}
+
+func (a *App) StopProxy() bool {
+	return a.toggleProxy((config.StatusInActive))
+}
+
+func (a *App) toggleProxy(status ...int) bool {
+	targetStatus := config.StatusAuto
+	if len(status) > 0 {
+		targetStatus = status[0]
+	}
+	_, err := server.Toggle(targetStatus)
+	if err != nil {
+		return false
+	}
+	// runtime.EventsEmit(a.ctx, "proxyStatusChange", new_status)
+	return true
 }
 
 func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceData) {
-	runtime.WindowShow(a.ctx)
+	a.ShowWindow()
+	a.StartProxy()
+	// runtime.WindowShow(a.ctx)
 }
 
 // HideWindow 隐藏主窗口

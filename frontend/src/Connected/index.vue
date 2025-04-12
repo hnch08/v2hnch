@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import UserInfo from './UserInfo.vue'
 
 const userInfo = ref({
@@ -8,11 +8,25 @@ const userInfo = ref({
     avatar: 'https://placekitten.com/100/100' // 示例头像URL
 })
 
+const loading = ref(false)
+
 const proxyEnabled = ref(false)
 
-const toggleProxy = () => {
+const toggleProxy = async () => {
+    loading.value = true
     proxyEnabled.value = !proxyEnabled.value
+    let result = false
+    if (proxyEnabled.value) {
+        result = await window.go.main.App.StartProxy()
+    } else {
+        result = await window.go.main.App.StopProxy()
+    }
+    if (!result) {
+        proxyEnabled.value = !proxyEnabled.value
+    }
+    loading.value = false
 }
+
 </script>
 
 <template>

@@ -3,12 +3,13 @@ package v2ray
 import (
 	"bytes"
 	"embed"
+	"fmt"
 	"sync"
 
 	core "github.com/v2fly/v2ray-core/v5"
-	"github.com/v2fly/v2ray-core/v5/common"
-	"github.com/v2fly/v2ray-core/v5/infra/conf/serial"
-	v4 "github.com/v2fly/v2ray-core/v5/infra/conf/v4"
+	_ "github.com/v2fly/v2ray-core/v5/app/proxyman/inbound"
+	_ "github.com/v2fly/v2ray-core/v5/app/proxyman/outbound"
+	_ "github.com/v2fly/v2ray-core/v5/main/formats"
 )
 
 var (
@@ -20,18 +21,22 @@ var (
 var conf embed.FS
 
 func StartV2Ray(data []byte) (core.Server, error) {
-	cf := &v4.Config{}
-	c, err := serial.DecodeJSONConfig(bytes.NewReader(data))
-	common.Must(err)
-	*cf = *c
-
-	coreConfig, err := cf.Build()
+	configFormat := "json"
+	reader := bytes.NewReader(data)
+	config, err := core.LoadConfig(configFormat, reader)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
-	server, err := core.New(coreConfig)
+	// coreConfig, err := cf.Build()
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	server, err := core.New(config)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	return server, nil

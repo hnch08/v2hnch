@@ -8,7 +8,15 @@ declare interface Window {
         HideWindow: () => Promise<void>;
         ShowWindow: () => Promise<void>;
         Quit: () => Promise<void>;
+        StartProxy: () => Promise<boolean>;
+        StopProxy: () => Promise<boolean>;
+        SetAddress: (address: string) => Promise<void>;
+        GetConfig: () => Promise<config.Config>;
+        GetStatus: () => Promise<number>;
       }
     }
+  },
+  runtime: {
+    EventsOn: (eventName: string, callback: (...data: any) => void) => void;
   }
 } 

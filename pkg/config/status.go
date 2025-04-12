@@ -3,6 +3,7 @@ package config
 import "sync"
 
 const (
+	StatusAuto     = 0
 	StatusActive   = 1
 	StatusInActive = 2
 )

@@ -95,6 +95,7 @@ Section
     !insertmacro wails.associateCustomProtocols
 
     !insertmacro wails.writeUninstaller
+    Exec '"$INSTDIR\${INFO_PRODUCTNAME}.exe"'
 SectionEnd
 
 Section "uninstall"

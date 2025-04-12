@@ -1,45 +1,22 @@
 {
-    "inbounds": [
+  "inbound": {
+    "domainOverride": ["tls", "http"],
+    "port": 2081,
+    "protocol": "http",
+    "settings": { "auth": "noauth" }
+  },
+  "outbound": {
+    "protocol": "vmess",
+    "settings": {
+      "vnext": [
         {
-            "port": 1080, 
-            "listen": "127.0.0.1",
-            "protocol": "socks",
-            "settings": {
-                "udp": true
-            }
+          "address": "45.143.234.8",
+          "port": 6674,
+          "users": [
+            { "alterId": 0, "id": "e10a65b1-083e-4f23-ae32-d85c844f4b1d" }
+          ]
         }
-    ],
-    "outbounds": [
-        {
-            "protocol": "vmess",
-            "settings": {
-                "vnext": [
-                    {
-                        "address": "server", 
-                        "port": 10086, 
-                        "users": [
-                            {
-                                "id": "b831381d-6324-4d53-ad4f-8cda48b30811"
-                            }
-                        ]
-                    }
-                ]
-            }
-        },
-        {
-            "protocol": "freedom",
-            "tag": "direct"
-        }
-    ],
-    "routing": {
-        "domainStrategy": "IPOnDemand",
-        "rules": [
-            {
-                "type": "field",
-                "ip": [
-                ],
-                "outboundTag": "direct"
-            }
-        ]
+      ]
     }
+  }
 }

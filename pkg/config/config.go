@@ -37,6 +37,7 @@ func GetConfig() *Config {
 	if _, err := os.Stat(ConfigFile); os.IsNotExist(err) {
 		defaultConfig := &Config{
 			Username:   "",
+			Name:       "",
 			RequestURL: "",
 		}
 		err = Write(defaultConfig)
@@ -57,6 +58,7 @@ func GetConfig() *Config {
 
 type Config struct {
 	Username   string `json:"username"`
+	Name       string `json:"name"`
 	RequestURL string `json:"requestURL"`
 }
 
@@ -107,6 +109,7 @@ func SetValue(key string, value string) chan error {
 	go func() {
 		config, err := Read()
 		if err != nil {
+			fmt.Println("读取配置失败:", err)
 			result <- fmt.Errorf("读取配置失败: %v", err)
 			return
 		}
@@ -114,20 +117,24 @@ func SetValue(key string, value string) chan error {
 		// 使用反射动态设置字段值
 		v := reflect.ValueOf(config).Elem()
 		field := v.FieldByName(cases.Title(language.Und).String(key))
-
+		fmt.Println("field:", field)
 		if !field.IsValid() {
+			fmt.Println("未知的配置项:", key)
 			result <- fmt.Errorf("未知的配置项: %s", key)
 			return
 		}
 
 		if field.Kind() == reflect.String {
+			fmt.Println("设置配置项:", key, value)
 			field.SetString(value)
 		} else {
+			fmt.Printf("配置项 %s 类型不是字符串\n", key)
 			result <- fmt.Errorf("配置项 %s 类型不是字符串", key)
 			return
 		}
 
 		if err := Write(config); err != nil {
+			fmt.Println("写入配置失败:", err)
 			result <- err
 			return
 		}
@@ -135,5 +142,6 @@ func SetValue(key string, value string) chan error {
 		result <- nil
 	}()
 
+	fmt.Println("设置配置完成")
 	return result
 }

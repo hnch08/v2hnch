@@ -8,8 +8,8 @@ const connectStatus = ref(1)
 const emit = defineEmits(['changeConnectStatus'])
 const handleConnect = async (ipAddress: string) => {
     try {
-        console.log(ipAddress)
         connectStatus.value = 2
+        window.go.main.App.SetAddress(ipAddress)
         // emit('changeConnectStatus', 2)
     } catch (err) {
         errorMessage.value = '连接失败，请重试'

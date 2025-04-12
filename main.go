@@ -28,13 +28,16 @@ func main() {
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:  "v2hnch",
-		Width:  400,
+		Width:  800,
 		Height: 600,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
-		OnStartup:        app.startup,
+		BackgroundColour:  &options.RGBA{R: 27, G: 38, B: 54, A: 1},
+		OnStartup:         app.startup,
+		OnBeforeClose:     app.beforeClose,
+		StartHidden:       true,
+		HideWindowOnClose: true,
 		Bind: []interface{}{
 			app,
 		},
