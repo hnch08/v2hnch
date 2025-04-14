@@ -13,6 +13,7 @@ declare interface Window {
         SetAddress: (address: string) => Promise<boolean>;
         GetConfig: () => Promise<config.Config>;
         GetStatus: () => Promise<number>;
+        CheckURL: () => Promise<boolean>;
       }
     }
   },

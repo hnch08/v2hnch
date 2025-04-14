@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"v2hnch/pkg/config"
 	"v2hnch/pkg/server"
 
@@ -43,19 +42,33 @@ func (a *App) startup(ctx context.Context) {
 		}
 		systray.SetIcon(iconBytes)
 		systray.SetTooltip("创合智能")
-		show := systray.AddMenuItem("Show", "Show The Window")
-		toggle := systray.AddMenuItem("Toggle", "Toggle The Window")
+		show := systray.AddMenuItem("显示窗口", "显示窗口")
+		toggle := systray.AddMenuItemCheckbox("切换状态", "切换代理状态", true)
 		systray.AddSeparator()
-		exit := systray.AddMenuItem("Exit", "Quit The Program")
+		exit := systray.AddMenuItem("退出程序", "退出程序")
 
 		show.Click(func() { a.ShowWindow() })
-		toggle.Click(func() { a.toggleProxy() })
-		exit.Click(func() { a.Quit() })
+		toggle.Click(func() {
+			if toggle.Checked() {
+				a.StopProxy()
+				toggle.Uncheck()
+			} else {
+				a.StartProxy()
+				toggle.Check()
+			}
+			new_status := a.GetStatus()
+			runtime.EventsEmit(a.ctx, "proxyStatusChange", new_status)
+		})
+		exit.Click(func() {
+			systray.Quit()
+			a.Quit()
+		})
 
 		systray.SetOnClick(func(menu systray.IMenu) { a.ShowWindow() })
 		systray.SetOnRClick(func(menu systray.IMenu) { menu.ShowMenu() })
 	}
 	systray.Run(systemTray, func() {})
+
 }
 
 func (a *App) beforeClose(ctx context.Context) bool {
@@ -73,19 +86,21 @@ func (a *App) GetConfig() *config.Config {
 }
 
 func (a *App) SetAddress(address string) bool {
-	url := fmt.Sprintf("http://%s:3060/api/health", address)
-	resp, err := http.Get(url)
-	if err != nil {
-		fmt.Printf("请求失败: %v\n", err)
+	if !server.CheckURL(address) {
 		return false
 	}
-	defer resp.Body.Close()
-	fmt.Println(resp)
 	conf := config.GetConfig()
 	conf.RequestURL = address
-	conf.Username = conf.Username + "1"
 	config.Write(conf)
 	return true
+}
+
+func (a *App) CheckURL() bool {
+	conf := config.GetConfig()
+	if conf.RequestURL == "" {
+		return false
+	}
+	return server.CheckURL(conf.RequestURL)
 }
 
 func (a *App) GetStatus() int {
@@ -116,6 +131,8 @@ func (a *App) toggleProxy(status ...int) bool {
 func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceData) {
 	a.ShowWindow()
 	a.StartProxy()
+	new_status := a.GetStatus()
+	runtime.EventsEmit(a.ctx, "proxyStatusChange", new_status)
 	// runtime.WindowShow(a.ctx)
 }
 

@@ -40,6 +40,10 @@ onMounted(async () => {
     userInfo.value.phoneNumber = config.username
     userInfo.value.nickname = config.name
 })
+
+window.runtime.EventsOn('proxyStatusChange', (status) => {
+    proxyEnabled.value = status === 1
+})
 </script>
 
 <template>

@@ -1,6 +1,6 @@
 <template>
     <div class="input-wrapper">
-        <input placeholder="请输入服务器IP地址" v-model="ipAddress" class="input" name="text" type="text" />
+        <input placeholder="请输入服务器IP地址或域名" v-model="ipAddress" class="input" name="text" type="text" />
         <button @click="handleConnect" class="Subscribe-btn">
             连接
             <svg class="arrow" viewBox="0 0 38 15" height="20" width="20" xmlns="http://www.w3.org/2000/svg"
@@ -13,13 +13,17 @@
     </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 const ipAddress = ref('')
 const emit = defineEmits(['connect'])
 
 const handleConnect = () => {
     emit('connect', ipAddress.value)
 }
+onMounted(async () => {
+    const config = await window.go.main.App.GetConfig()
+    ipAddress.value = config.requestURL
+})
 </script>
 
 <style scoped>
