@@ -5,16 +5,16 @@
 !include "FileFunc.nsh"
 
 !ifndef INFO_PROJECTNAME
-    !define INFO_PROJECTNAME "v2hnch"
+    !define INFO_PROJECTNAME "创合AI登录器"
 !endif
 !ifndef INFO_COMPANYNAME
     !define INFO_COMPANYNAME "hnch"
 !endif
 !ifndef INFO_PRODUCTNAME
-    !define INFO_PRODUCTNAME "v2hnch"
+    !define INFO_PRODUCTNAME "创合AI登录器"
 !endif
 !ifndef INFO_PRODUCTVERSION
-    !define INFO_PRODUCTVERSION "0.0.1"
+    !define INFO_PRODUCTVERSION "1.0.0"
 !endif
 !ifndef INFO_COPYRIGHT
     !define INFO_COPYRIGHT "Copyright........."

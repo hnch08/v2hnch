@@ -10,25 +10,23 @@ import (
 	// "golang.org/x/sys/windows/registry"
 )
 
-// const (
-// 	internetSetting = `Software\Microsoft\Windows\CurrentVersion\Internet Settings`
-// )
-
+// SetProxy 设置系统代理
 func SetProxy(addr string) error {
 	// 启用代理
 	enableCmd := exec.Command("reg", "add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyEnable", "/t", "REG_DWORD", "/d", "1", "/f")
-	enableCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	enableCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} // 隐藏命令窗口
 	if err := enableCmd.Run(); err != nil {
-		return errors.Wrap(err, "设置系统代理失败, 请将系统代理手动设置为: "+addr)
+		return errors.Wrap(err, "设置系统代理失败, 请将系统代理手动设置为: "+addr) // 返回错误信息
 	}
 
-	// 设置代理服务器
+	// 设置代理服务器地址
 	serverCmd := exec.Command("reg", "add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyServer", "/t", "REG_SZ", "/d", "127.0.0.1:2081", "/f")
-	serverCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	serverCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} // 隐藏命令窗口
 	if err := serverCmd.Run(); err != nil {
-		return errors.Wrap(err, "设置系统代理失败, 请将系统代理手动设置为: "+addr)
+		return errors.Wrap(err, "设置系统代理失败, 请将系统代理手动设置为: "+addr) // 返回错误信息
 	}
-	// return nil
+
+	// 下面的代码是使用 Windows 注册表 API 设置代理的示例（已注释）
 	// k, err := registry.OpenKey(registry.CURRENT_USER, internetSetting, registry.ALL_ACCESS)
 	// if err != nil {
 	// 	return errors.Wrap(err, "设置系统代理失败, 请将系统代理手动设置为: "+addr)
@@ -40,26 +38,29 @@ func SetProxy(addr string) error {
 	// 	return errors.Wrap(err, "设置系统代理失败, 请将系统代理手动设置为: "+addr)
 	// }
 	// store.SetProxyStatus(true)
-	return nil
+	return nil // 返回 nil 表示成功
 }
 
+// UnSetProxy 禁用系统代理
 func UnSetProxy() error {
 	// 禁用代理
 	disableCmd := exec.Command("reg", "add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyEnable", "/t", "REG_DWORD", "/d", "0", "/f")
-	disableCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	disableCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} // 隐藏命令窗口
 	if err := disableCmd.Run(); err != nil {
-		return errors.Wrap(err, "清楚系统代理失败, 请手动操作")
+		return errors.Wrap(err, "清除系统代理失败, 请手动操作") // 返回错误信息
 	}
 
 	// （可选）清除代理服务器设置
 	clearCmd := exec.Command("reg", "delete", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyServer", "/f")
-	clearCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	clearCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} // 隐藏命令窗口
 	if err := clearCmd.Run(); err != nil {
-		return errors.Wrap(err, "清楚系统代理失败, 请手动操作")
+		return errors.Wrap(err, "清除系统代理失败, 请手动操作") // 返回错误信息
 	}
+
+	// 下面的代码是使用 Windows 注册表 API 清除代理的示例（已注释）
 	// k, err := registry.OpenKey(registry.CURRENT_USER, internetSetting, registry.ALL_ACCESS)
 	// if err != nil {
-	// 	return errors.Wrap(err, "清楚系统代理失败, 请手动操作")
+	// 	return errors.Wrap(err, "清除系统代理失败, 请手动操作")
 	// }
 	// defer k.Close()
 
@@ -68,5 +69,5 @@ func UnSetProxy() error {
 	// 	return errors.Wrap(err, "清除系统代理失败, 请手动清除")
 	// }
 	// store.SetProxyStatus(false)
-	return nil
+	return nil // 返回 nil 表示成功
 }

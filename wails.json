@@ -1,19 +1,19 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "v2hnch",
-  "outputfilename": "v2hnch",
+  "name": "创合AI登录器",
+  "outputfilename": "v2hnch1",
   "frontend:install": "pnpm install",
   "frontend:build": "pnpm build",
   "frontend:dev:watcher": "pnpm dev",
   "frontend:dev:serverUrl": "auto",
   "author": {
-    "name": "Milky",
-    "email": "1099738693@qq.com"
+    "name": "Hnch",
+    "email": "19973371929@189.com"
   },
   "info": {
     "companyName": "hnch",
-    "productName": "v2hnch",
-    "productVersion": "0.0.1",
+    "productName": "创合AI登录器",
+    "productVersion": "1.0.0",
     "protocols": [
       {
         "scheme": "v2hnch",

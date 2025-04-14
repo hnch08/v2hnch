@@ -61,7 +61,7 @@
                     <div class="step-number">6</div>
                     <div class="step-text">
                         <h3>连接成功</h3>
-                        <p>连接成功后，开启代理，即可使用AI国外工具</p>
+                        <p>连接成功后，开启代理，即可使用国外AI工具</p>
                     </div>
 
                 </div>

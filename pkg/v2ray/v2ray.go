@@ -13,68 +13,70 @@ import (
 )
 
 var (
-	mu      sync.Mutex
-	_server core.Server
+	mu      sync.Mutex  // 保护对服务器实例的并发访问
+	_server core.Server // V2Ray 服务器实例
 )
 
 //go:embed v2ray_config.json
-var conf embed.FS
+var conf embed.FS // 嵌入的 V2Ray 配置文件
 
+// StartV2Ray 启动 V2Ray 服务器
 func StartV2Ray(data []byte) (core.Server, error) {
-	configFormat := "json"
-	reader := bytes.NewReader(data)
-	config, err := core.LoadConfig(configFormat, reader)
+	configFormat := "json"                               // 配置格式为 JSON
+	reader := bytes.NewReader(data)                      // 创建字节读取器
+	config, err := core.LoadConfig(configFormat, reader) // 加载配置
 	if err != nil {
-		fmt.Println(err)
-		return nil, err
+		fmt.Println(err) // 打印错误信息
+		return nil, err  // 返回错误
 	}
 
-	// coreConfig, err := cf.Build()
-	// if err != nil {
-	// 	return nil, err
-	// }
-
+	// 创建新的 V2Ray 服务器实例
 	server, err := core.New(config)
 	if err != nil {
-		fmt.Println(err)
-		return nil, err
+		fmt.Println(err) // 打印错误信息
+		return nil, err  // 返回错误
 	}
-	return server, nil
+	return server, nil // 返回服务器实例
 }
 
+// Start 启动 V2Ray 服务器
 func Start() error {
-	configure, err := conf.ReadFile("v2ray_config.json")
-	// fmt.Println(string(configure))
+	configure, err := conf.ReadFile("v2ray_config.json") // 读取嵌入的配置文件
 	if err != nil {
-		return err
+		return err // 返回错误
 	}
-	mu.Lock()
-	defer mu.Unlock()
+	mu.Lock()         // 获取锁以保护对服务器实例的访问
+	defer mu.Unlock() // 确保在函数结束时释放锁
 
+	// 如果服务器已经在运行，先关闭它
 	if _server != nil {
-		_server.Close()
-		_server = nil
+		_server.Close() // 关闭当前服务器
+		_server = nil   // 重置服务器实例
 	}
 
+	// 启动新的 V2Ray 服务器
 	server, err := StartV2Ray(configure)
 	if err != nil {
-		return err
+		return err // 返回错误
 	}
 
+	// 启动服务器
 	if err := server.Start(); err != nil {
-		return err
+		return err // 返回错误
 	}
 
-	_server = server
-	return nil
+	_server = server // 保存服务器实例
+	return nil       // 返回 nil 表示成功
 }
 
+// Stop 停止 V2Ray 服务器
 func Stop() {
-	mu.Lock()
-	defer mu.Unlock()
+	mu.Lock()         // 获取锁以保护对服务器实例的访问
+	defer mu.Unlock() // 确保在函数结束时释放锁
 
+	// 如果服务器正在运行，关闭它
 	if _server != nil {
-		_server.Close()
-		_server = nil
+		_server.Close() // 关闭服务器
+		_server = nil   // 重置服务器实例
 	}
 }
