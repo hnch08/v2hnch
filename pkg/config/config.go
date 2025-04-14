@@ -28,7 +28,6 @@ var once sync.Once
 func GetConfig() *Config {
 	once.Do(func() {
 		instance = &Config{}
-		fmt.Println(ConfigFile)
 		// 确保配置目录存在
 		if _, err := os.Stat(ConfigDir); os.IsNotExist(err) {
 			err = os.MkdirAll(ConfigDir, 0755)

@@ -8,8 +8,6 @@ export function GetConfig():Promise<config.Config>;
 
 export function GetStatus():Promise<number>;
 
-export function Greet(arg1:string):Promise<string>;
-
 export function HideWindow():Promise<void>;
 
 export function Quit():Promise<void>;

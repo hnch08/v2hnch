@@ -25,7 +25,6 @@ func main() {
 		arg_string := strings.TrimPrefix(argsWithoutProg[0], "v2hnch://")
 		arg_string = strings.TrimSuffix(arg_string, "/")
 		args := strings.SplitN(arg_string, "_", 2)
-
 		conf := config.GetConfig()
 		conf.Username = args[0]
 		conf.Name = args[1]
@@ -33,7 +32,7 @@ func main() {
 	}
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "v2hnch",
+		Title:  "湖南创合",
 		Width:  800,
 		Height: 600,
 		AssetServer: &assetserver.Options{

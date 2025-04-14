@@ -6,7 +6,9 @@ import Logo from '../assets/images/logochzn.png'
 const errorMessage = ref('')
 const connectStatus = ref(1)
 const loading = ref(false)
-const emit = defineEmits(['changeConnectStatus'])
+const isLogin = ref(false)
+
+const emit = defineEmits(['goTeach', 'changeConnectStatus'])
 const handleConnect = async (ipAddress: string) => {
     loading.value = true
     try {
@@ -29,11 +31,19 @@ const handleConnect = async (ipAddress: string) => {
 const changeConnectStatus = (status: number) => {
     connectStatus.value = status
 }
+const goTeach = () => {
+    emit('goTeach')
+}
 
 onMounted(async () => {
     const result = await window.go.main.App.GetConfig()
     // connectStatus.value = result ? 2 : 1
     errorMessage.value = result ? "" : "连接失败，请检查IP地址或域名是否正确"
+})
+onMounted(async () => {
+  const config = await window.go.main.App.GetConfig()
+  connectStatus.value = config.requestURL !== '' ? 2 : 1
+  isLogin.value = config.username !== ''
 })
 </script>
 
@@ -43,11 +53,17 @@ onMounted(async () => {
                 <img :src="Logo" alt="logo" class="logo">
             </div>
             <div class="input-group">
-                <cinput v-if="connectStatus === 1" @connect="handleConnect" />
+                <cinput v-if="connectStatus === 1" :disabled="!isLogin" @connect="handleConnect" />
                 <Connected v-if="connectStatus === 2" @changeConnectStatus="changeConnectStatus" />
             </div>
             <div v-if="errorMessage" class="error-message">
                 {{ errorMessage }}
+            </div>
+            <div v-if="!isLogin" class="error-message">
+               检测到您未从系统官网登录，请从官网登录,
+               <span class="teach-link" @click="goTeach">
+                登录教程
+               </span>
             </div>
             <div class="footer">
                 技术支持: 湖南创合智能科技有限公司
@@ -77,46 +93,9 @@ onMounted(async () => {
     object-fit: contain;
 }
 
-.loading-mask {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
-
-.loading-content {
-    background: white;
-    padding: 2rem;
-    border-radius: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.spinner {
-    width: 30px;
-    height: 30px;
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #0066cc;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 0.5rem;
-}
-
-.loading-text {
+.teach-link {
     color: #0066cc;
-    font-size: 0.9rem;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    cursor: pointer;
 }
 
 .content-box {
@@ -187,5 +166,48 @@ h1 {
     margin-top: 2rem;
     color: #86868b;
     font-size: 0.9rem;
+}
+
+
+.loading-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #0066cc;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 0.5rem;
+}
+
+.loading-text {
+    color: #0066cc;
+    font-size: 0.9rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 </style>

@@ -27,15 +27,15 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
-	a.StartProxy()
-
 	conf := config.GetConfig()
-	if conf.RequestURL == "" {
+	if conf.RequestURL == "" && conf.Username != "" {
 		a.ShowWindow()
+	}
+	if conf.RequestURL != "" && conf.Username != "" {
+		a.StartProxy()
 	}
 
 	systemTray := func() {
-		// systray.SetIcon([]byte()) // read the icon from a file
 		iconBytes, err := assets.ReadFile("favicon.ico")
 		if err != nil {
 			fmt.Println("读取图标文件失败:", err)
@@ -43,22 +43,23 @@ func (a *App) startup(ctx context.Context) {
 		systray.SetIcon(iconBytes)
 		systray.SetTooltip("创合智能")
 		show := systray.AddMenuItem("显示窗口", "显示窗口")
-		toggle := systray.AddMenuItemCheckbox("切换状态", "切换代理状态", true)
+		// status := config.GetStatus()
+		// toggle := systray.AddMenuItemCheckbox("切换状态", "切换代理状态", status == config.StatusActive)
 		systray.AddSeparator()
 		exit := systray.AddMenuItem("退出程序", "退出程序")
 
 		show.Click(func() { a.ShowWindow() })
-		toggle.Click(func() {
-			if toggle.Checked() {
-				a.StopProxy()
-				toggle.Uncheck()
-			} else {
-				a.StartProxy()
-				toggle.Check()
-			}
-			new_status := a.GetStatus()
-			runtime.EventsEmit(a.ctx, "proxyStatusChange", new_status)
-		})
+		// toggle.Click(func() {
+		// 	if toggle.Checked() {
+		// 		a.StopProxy()
+		// 		toggle.Uncheck()
+		// 	} else {
+		// 		a.StartProxy()
+		// 		toggle.Check()
+		// 	}
+		// 	new_status := a.GetStatus()
+		// 	runtime.EventsEmit(a.ctx, "proxyStatusChange", new_status)
+		// })
 		exit.Click(func() {
 			systray.Quit()
 			a.Quit()
@@ -76,11 +77,6 @@ func (a *App) beforeClose(ctx context.Context) bool {
 	return false
 }
 
-// Greet returns a greeting for the given name
-func (a *App) Greet(name string) string {
-	return fmt.Sprintf("Hello %s, It's show time!", name)
-}
-
 func (a *App) GetConfig() *config.Config {
 	return config.GetConfig()
 }
@@ -92,6 +88,7 @@ func (a *App) SetAddress(address string) bool {
 	conf := config.GetConfig()
 	conf.RequestURL = address
 	config.Write(conf)
+	a.StartProxy()
 	return true
 }
 
@@ -121,19 +118,19 @@ func (a *App) toggleProxy(status ...int) bool {
 		targetStatus = status[0]
 	}
 	_, err := server.Toggle(targetStatus)
-	if err != nil {
-		return false
-	}
-	// runtime.EventsEmit(a.ctx, "proxyStatusChange", new_status)
-	return true
+	return err == nil
 }
 
 func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceData) {
-	a.ShowWindow()
-	a.StartProxy()
-	new_status := a.GetStatus()
-	runtime.EventsEmit(a.ctx, "proxyStatusChange", new_status)
-	// runtime.WindowShow(a.ctx)
+	conf := config.GetConfig()
+	if conf.RequestURL == "" && conf.Username != "" {
+		a.ShowWindow()
+	}
+	if conf.RequestURL != "" && conf.Username != "" {
+		a.StartProxy()
+		new_status := a.GetStatus()
+		runtime.EventsEmit(a.ctx, "proxyStatusChange", new_status)
+	}
 }
 
 // HideWindow 隐藏主窗口

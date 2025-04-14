@@ -1,7 +1,7 @@
 <template>
     <div class="input-wrapper">
         <input placeholder="请输入服务器IP地址或域名" v-model="ipAddress" class="input" name="text" type="text" />
-        <button @click="handleConnect" class="Subscribe-btn">
+        <button :disabled="disabled" @click="handleConnect" :class="{ 'disabled': disabled }" class="Subscribe-btn">
             连接
             <svg class="arrow" viewBox="0 0 38 15" height="20" width="20" xmlns="http://www.w3.org/2000/svg"
                 fill="white">
@@ -10,6 +10,7 @@
                 </path>
             </svg>
         </button>
+        {{ disabled }}
     </div>
 </template>
 <script setup lang="ts">
@@ -17,12 +18,19 @@ import { onMounted, ref } from 'vue'
 const ipAddress = ref('')
 const emit = defineEmits(['connect'])
 
+defineProps({
+    disabled: {
+        type: Boolean,
+        default: false
+    }
+})
+
 const handleConnect = () => {
     emit('connect', ipAddress.value)
 }
 onMounted(async () => {
     const config = await window.go.main.App.GetConfig()
-    ipAddress.value = config.requestURL
+    ipAddress.value = config.requestURL 
 })
 </script>
 
@@ -60,6 +68,11 @@ onMounted(async () => {
     align-items: center;
     justify-content: center;
     gap: 4px;
+}
+
+.Subscribe-btn.disabled {
+    background-color: #d0d7e1;
+    cursor: not-allowed;
 }
 
 .Subscribe-btn:hover {
