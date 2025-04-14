@@ -26,18 +26,15 @@ func SetProxy(addr string) error {
 		return errors.Wrap(err, "设置系统代理失败, 请将系统代理手动设置为: "+addr) // 返回错误信息
 	}
 
-	// 下面的代码是使用 Windows 注册表 API 设置代理的示例（已注释）
-	// k, err := registry.OpenKey(registry.CURRENT_USER, internetSetting, registry.ALL_ACCESS)
-	// if err != nil {
-	// 	return errors.Wrap(err, "设置系统代理失败, 请将系统代理手动设置为: "+addr)
-	// }
-	// defer k.Close()
+	// 设置不走代理的本地IP
+	bypassList := "localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;192.168.*;<local>"
 
-	// err = k.SetStringValue("AutoConfigURL", addr)
-	// if err != nil {
-	// 	return errors.Wrap(err, "设置系统代理失败, 请将系统代理手动设置为: "+addr)
-	// }
-	// store.SetProxyStatus(true)
+	noProxyCmd := exec.Command("reg", "add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyOverride", "/t", "REG_SZ", "/d", bypassList, "/f")
+	noProxyCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} // 隐藏命令窗口
+	if err := noProxyCmd.Run(); err != nil {
+		return errors.Wrap(err, "设置不走代理的本地IP失败, 请手动设置") // 返回错误信息
+	}
+
 	return nil // 返回 nil 表示成功
 }
 

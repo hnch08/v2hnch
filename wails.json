@@ -1,7 +1,7 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
   "name": "创合AI登录器",
-  "outputfilename": "v2hnch1",
+  "outputfilename": "创合AI登录器",
   "frontend:install": "pnpm install",
   "frontend:build": "pnpm build",
   "frontend:dev:watcher": "pnpm dev",
