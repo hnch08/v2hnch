@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"v2hnch/pkg/config" // 导入配置包
+	"v2hnch/pkg/logger"
 	"v2hnch/pkg/server" // 导入服务器包
 
 	"github.com/energye/systray" // 导入系统托盘库
@@ -27,14 +28,17 @@ func NewApp() *App {
 // startup 在应用启动时被调用。上下文被保存
 // 这样我们就可以调用运行时方法
 func (a *App) startup(ctx context.Context) {
-	a.ctx = ctx // 保存应用上下文
+	a.ctx = ctx
+	logger.Info("=================应用程序启动初始化=================")
 
-	conf := config.GetConfig()                        // 获取配置
-	if conf.RequestURL == "" && conf.Username != "" { // 如果请求 URL 为空且用户名不为空
-		a.ShowWindow() // 显示窗口
+	conf := config.GetConfig()
+	if conf.RequestURL == "" && conf.Username != "" {
+		logger.Info("显示窗口：用户名存在但URL为空")
+		a.ShowWindow()
 	}
-	if conf.RequestURL != "" && conf.Username != "" { // 如果请求 URL 不为空且用户名不为空
-		a.StartProxy() // 启动代理
+	if conf.RequestURL != "" && conf.Username != "" {
+		logger.Info("启动代理：用户名和URL都存在")
+		a.StartProxy()
 	}
 
 	systemTray := func() { // 定义系统托盘函数
@@ -76,8 +80,9 @@ func (a *App) startup(ctx context.Context) {
 
 // beforeClose 在应用关闭前被调用
 func (a *App) beforeClose(ctx context.Context) bool {
-	a.StopProxy() // 停止代理
-	return false  // 返回 false，阻止应用关闭
+	logger.Info("应用程序准备关闭")
+	a.StopProxy()
+	return false
 }
 
 // GetConfig 获取配置
@@ -87,14 +92,20 @@ func (a *App) GetConfig() *config.Config {
 
 // SetAddress 设置地址
 func (a *App) SetAddress(address string) bool {
-	if !server.CheckURL(address) { // 检查 URL 是否有效
-		return false // 如果 URL 无效，返回 false
+	logger.Info("尝试设置新地址: %s", address)
+	if !server.CheckURL(address) {
+		logger.Error("URL地址无效: %s", address)
+		return false
 	}
-	conf := config.GetConfig() // 获取配置
-	conf.RequestURL = address  // 设置请求 URL
-	config.Write(conf)         // 写入配置
-	a.StartProxy()             // 启动代理
-	return true                // 返回 true
+	conf := config.GetConfig()
+	conf.RequestURL = address
+	logger.Info("更新配置中的URL地址")
+	if err := config.Write(conf); err != nil {
+		logger.Error("写入配置失败: %v", err)
+		return false
+	}
+	logger.Info("启动代理服务")
+	return a.StartProxy()
 }
 
 // CheckURL 检查 URL 是否有效
@@ -133,24 +144,30 @@ func (a *App) toggleProxy(status ...int) bool {
 
 // onSecondInstanceLaunch 当应用被第二次启动时调用
 func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceData) {
-	conf := config.GetConfig()                        // 获取配置
-	if conf.RequestURL == "" && conf.Username != "" { // 如果请求 URL 为空且用户名不为空
-		a.ShowWindow() // 显示窗口
+	logger.Info("检测到第二个实例启动")
+	conf := config.GetConfig()
+	if conf.RequestURL == "" && conf.Username != "" {
+		logger.Info("显示窗口：用户名存在但URL为空")
+		a.ShowWindow()
 	}
-	if conf.RequestURL != "" && conf.Username != "" { // 如果请求 URL 不为空且用户名不为空
-		a.StartProxy()                                             // 启动代理
-		new_status := a.GetStatus()                                // 获取状态
-		runtime.EventsEmit(a.ctx, "proxyStatusChange", new_status) // 发送代理状态改变事件
+	if conf.RequestURL != "" && conf.Username != "" {
+		logger.Info("启动代理：用户名和URL都存在")
+		a.StartProxy()
+		new_status := a.GetStatus()
+		logger.Info("发送代理状态改变事件: %d", new_status)
+		runtime.EventsEmit(a.ctx, "proxyStatusChange", new_status)
 	}
 }
 
 // HideWindow 隐藏主窗口
 func (a *App) HideWindow() {
+	logger.Info("隐藏主窗口")
 	runtime.WindowHide(a.ctx) // 隐藏主窗口
 }
 
 // ShowWindow 显示主窗口
 func (a *App) ShowWindow() {
+	logger.Info("显示主窗口")
 	runtime.WindowShow(a.ctx)                  // 显示主窗口
 	runtime.WindowUnminimise(a.ctx)            // 取消最小化
 	runtime.WindowSetAlwaysOnTop(a.ctx, true)  // 设置窗口置顶
@@ -159,5 +176,6 @@ func (a *App) ShowWindow() {
 
 // Quit 退出应用
 func (a *App) Quit() {
+	logger.Info("用户请求退出应用")
 	runtime.Quit(a.ctx) // 退出应用
 }
