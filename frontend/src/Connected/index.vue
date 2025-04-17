@@ -34,11 +34,12 @@ const disconnect = () => {
 }
 
 onMounted(async () => {
-    const status = await window.go.main.App.GetStatus()
     const config = await window.go.main.App.GetConfig()
-    proxyEnabled.value = status === 1
     userInfo.value.phoneNumber = config.username
     userInfo.value.nickname = config.name
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    const status = await window.go.main.App.GetStatus()
+    proxyEnabled.value = status === 1
 })
 
 window.runtime.EventsOn('proxyStatusChange', (status) => {

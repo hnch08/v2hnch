@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
+	"strings"
 	"sync"
+	"v2hnch/pkg/api"
+	"v2hnch/pkg/config"
 
 	core "github.com/v2fly/v2ray-core/v5"
 	_ "github.com/v2fly/v2ray-core/v5/app/proxyman/inbound"
@@ -41,12 +44,18 @@ func StartV2Ray(data []byte) (core.Server, error) {
 
 // Start 启动 V2Ray 服务器
 func Start() error {
+	api.GetVpnConfig()
 	configure, err := conf.ReadFile("v2ray_config.json") // 读取嵌入的配置文件
 	if err != nil {
 		return err // 返回错误
 	}
 	mu.Lock()         // 获取锁以保护对服务器实例的访问
 	defer mu.Unlock() // 确保在函数结束时释放锁
+
+	configure, err = updateConfig(configure)
+	if err != nil {
+		return err
+	}
 
 	// 如果服务器已经在运行，先关闭它
 	if _server != nil {
@@ -79,4 +88,25 @@ func Stop() {
 		_server.Close() // 关闭服务器
 		_server = nil   // 重置服务器实例
 	}
+}
+
+// updateConfig 更新配置文件中的地址、端口和ID
+func updateConfig(data []byte) ([]byte, error) {
+	// 获取最新的配置
+	cm := config.GetConfigManager()
+
+	conf := cm.GetConfig()
+
+	// 将字节数组转换为字符串以便进行替换
+	configStr := string(data)
+
+	// 替换地址、端口和ID
+	if conf.Address == "" || conf.Port == "" || conf.Id == "" {
+		return nil, fmt.Errorf("配置信息不完整")
+	}
+	configStr = strings.Replace(configStr, `"address": "address"`, fmt.Sprintf(`"address": "%s"`, conf.Address), 1)
+	configStr = strings.Replace(configStr, `"port": "port"`, fmt.Sprintf(`"port": %s`, conf.Port), 1)
+	configStr = strings.Replace(configStr, `"id": "id"`, fmt.Sprintf(`"id": "%s"`, conf.Id), 1)
+
+	return []byte(configStr), nil
 }

@@ -19,7 +19,15 @@ func SetProxy(addr string) error {
 	enableCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	if err := enableCmd.Run(); err != nil {
 		logger.Error("启用系统代理失败: %v", err)
-		return errors.Wrap(err, "设置系统代理失败, 请将系统代理手动设置为: "+addr)
+		return errors.Wrap(err, "设置系统代理失败, 请将系统代理手动设置为: "+addr) // 返回错误信息
+	}
+
+	// 设置代理服务器地址
+	serverCmd := exec.Command("reg", "add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyServer", "/t", "REG_SZ", "/d", "127.0.0.1:2081", "/f")
+	serverCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} // 隐藏命令窗口
+	if err := serverCmd.Run(); err != nil {
+		logger.Error("设置系统代理服务器地址失败: %v", err)
+		return errors.Wrap(err, "设置系统代理失败, 请将系统代理手动设置为: "+addr) // 返回错误信息
 	}
 
 	logger.Info("系统代理设置成功")

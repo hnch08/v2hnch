@@ -10,6 +10,10 @@ export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
 
+export function GetLoginStatus() {
+  return window['go']['main']['App']['GetLoginStatus']();
+}
+
 export function GetStatus() {
   return window['go']['main']['App']['GetStatus']();
 }

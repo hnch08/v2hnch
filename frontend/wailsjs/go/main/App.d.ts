@@ -6,6 +6,8 @@ export function CheckURL():Promise<boolean>;
 
 export function GetConfig():Promise<config.Config>;
 
+export function GetLoginStatus():Promise<boolean>;
+
 export function GetStatus():Promise<number>;
 
 export function HideWindow():Promise<void>;

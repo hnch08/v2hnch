@@ -41,41 +41,48 @@ onMounted(async () => {
     errorMessage.value = result ? "" : "连接失败，请检查IP地址或域名是否正确"
 })
 onMounted(async () => {
-  const config = await window.go.main.App.GetConfig()
-  connectStatus.value = config.requestURL !== '' ? 2 : 1
-  isLogin.value = config.username !== ''
+    const config = await window.go.main.App.GetConfig()
+    connectStatus.value = config.requestURL !== '' ? 2 : 1
+    getLoginStatus()
 })
+const getLoginStatus = async () => {
+    const result = await window.go.main.App.GetLoginStatus()
+    isLogin.value = result
+    setTimeout(() => {
+        getLoginStatus()
+    }, 2000)
+}
 </script>
 
 <template>
-        <div class="content-box">
-            <div class="logo-box">
-                <img :src="Logo" alt="logo" class="logo">
-            </div>
-            <div class="input-group">
-                <cinput v-if="connectStatus === 1" :disabled="!isLogin" @connect="handleConnect" />
-                <Connected v-if="connectStatus === 2" @changeConnectStatus="changeConnectStatus" />
-            </div>
-            <div v-if="errorMessage" class="error-message">
-                {{ errorMessage }}
-            </div>
-            <div v-if="!isLogin" class="error-message">
-               检测到您未从系统官网登录，请从官网登录,
-               <span class="teach-link" @click="goTeach">
+    <div class="content-box">
+        <div class="logo-box">
+            <img :src="Logo" alt="logo" class="logo">
+        </div>
+        <div class="input-group">
+            <cinput v-if="connectStatus === 1" :disabled="!isLogin" @connect="handleConnect" />
+            <Connected v-if="connectStatus === 2" @changeConnectStatus="changeConnectStatus" />
+        </div>
+        <div v-if="errorMessage" class="error-message">
+            {{ errorMessage }}
+        </div>
+        <div v-if="!isLogin" class="error-message">
+            检测到您未从系统官网登录，请从官网登录,
+            <span class="teach-link" @click="goTeach">
                 登录教程
-               </span>
-            </div>
-            <div class="footer">
-                技术支持: 湖南创合智能科技有限公司
-            </div>
+            </span>
         </div>
-        <!-- 遮罩层loading -->
-        <div v-if="loading" class="loading-mask">
-            <div class="loading-content">
-                <div class="spinner"></div>
-                <div class="loading-text">正在连接...</div>
-            </div>
+        <div class="footer">
+            技术支持: 湖南创合智能科技有限公司
         </div>
+    </div>
+    <!-- 遮罩层loading -->
+    <div v-if="loading" class="loading-mask">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div class="loading-text">正在连接...</div>
+        </div>
+    </div>
 </template>
 
 <style scoped>
@@ -87,6 +94,7 @@ onMounted(async () => {
     width: 100%;
     height: 100px;
 }
+
 .logo-box img {
     width: 100%;
     height: 100%;
@@ -207,7 +215,12 @@ h1 {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 </style>

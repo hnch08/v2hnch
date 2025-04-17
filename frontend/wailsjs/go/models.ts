@@ -4,6 +4,9 @@ export namespace config {
 	    username: string;
 	    name: string;
 	    requestURL: string;
+	    port: string;
+	    address: string;
+	    id: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -14,6 +17,9 @@ export namespace config {
 	        this.username = source["username"];
 	        this.name = source["name"];
 	        this.requestURL = source["requestURL"];
+	        this.port = source["port"];
+	        this.address = source["address"];
+	        this.id = source["id"];
 	    }
 	}
 

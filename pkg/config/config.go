@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"sync"
+	"v2hnch/pkg/logger"
 
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
+	"github.com/fsnotify/fsnotify"
 )
 
 // 配置目录和文件的路径
@@ -21,23 +20,37 @@ var (
 // 初始化配置目录和文件路径
 func init() {
 	ConfigDir = filepath.Join(os.Getenv("APPDATA"), "v2hnch") // 获取应用数据目录
-	ConfigFile = filepath.Join(ConfigDir, "config.json")      // 配置文件路径
+	ConfigFile = filepath.Join(ConfigDir, "config.enc")       // 配置文件路径，使用.enc扩展名表示加密文件
 }
 
-var instance *Config // 单例配置实例
-var once sync.Once   // 确保单例初始化的同步机制
+// ConfigManager 管理配置，包含锁
+type ConfigManager struct {
+	config  *Config
+	mu      sync.RWMutex      // 读写锁
+	watcher *fsnotify.Watcher // 文件变化监听器
+}
+
+var (
+	instance *ConfigManager
+	once     sync.Once
+)
 
 // GetConfig 获取配置的单例实例
-func GetConfig() *Config {
+func GetConfigManager() *ConfigManager {
 	once.Do(func() {
-		instance = &Config{} // 创建新的配置实例
+		logger.Info("开始初始化配置单例-*-*-*-*-*-*-*-*-*-*-*-*")
+		instance = &ConfigManager{
+			config: &Config{},
+		} // 创建新的配置实例
+
 		// 确保配置目录存在
 		if _, err := os.Stat(ConfigDir); os.IsNotExist(err) {
 			err = os.MkdirAll(ConfigDir, 0755) // 创建配置目录
 			if err != nil {
-				fmt.Printf("创建配置目录失败: %v\n", err)
+				logger.Error("创建配置目录失败: %v", err)
 				return
 			}
+			logger.Info("创建配置目录成功: %s", ConfigDir)
 		}
 
 		// 确保配置文件存在
@@ -46,24 +59,51 @@ func GetConfig() *Config {
 				Username:   "",
 				Name:       "",
 				RequestURL: "",
+				Port:       "",
+				Address:    "",
+				Id:         "",
 			}
-			err = Write(defaultConfig) // 写入默认配置
+			err = Write(defaultConfig) // 写入默认配置（已加密）
 			if err != nil {
-				fmt.Printf("写入默认配置失败: %v\n", err)
+				logger.Error("写入默认配置失败: %v", err)
 				return
 			}
+			logger.Info("写入默认加密配置成功")
 		}
 
-		config, err := Read() // 读取配置文件
+		// 读取加密的配置文件
+		config, err := Read()
 		if err != nil {
-			fmt.Printf("读取配置失败: %v\n", err)
-			instance = &Config{} // 如果读取失败，返回一个空的配置实例
+			logger.Error("读取加密配置失败: %v", err)
+			instance.config = &Config{} // 如果读取失败，返回一个空的配置实例
 			return
 		}
-		instance = config // 设置单例实例为读取的配置
+
+		instance.config = config // 设置单例实例为读取的配置
+		logger.Info("成功初始化配置单例")
+
+		// 初始化文件变化监听
+		err = instance.startFileWatcher()
+		if err != nil {
+			logger.Error("启动文件监听失败: %v", err)
+			// 不终止程序，允许继续运行
+		}
 	})
 
-	return instance // 返回单例配置实例
+	return instance
+}
+
+func (cm *ConfigManager) GetConfig() *Config {
+	cm.mu.RLock()
+	defer cm.mu.RUnlock()
+	return &Config{
+		Username:   cm.config.Username,
+		Name:       cm.config.Name,
+		RequestURL: cm.config.RequestURL,
+		Port:       cm.config.Port,
+		Address:    cm.config.Address,
+		Id:         cm.config.Id,
+	}
 }
 
 // Config 结构体定义配置项
@@ -71,9 +111,12 @@ type Config struct {
 	Username   string `json:"username"`   // 用户名
 	Name       string `json:"name"`       // 名称
 	RequestURL string `json:"requestURL"` // 请求URL
+	Port       string `json:"port"`
+	Address    string `json:"address"`
+	Id         string `json:"id"`
 }
 
-// Write 将配置写入文件
+// Write 将配置加密写入文件
 func Write(config *Config) error {
 	// 将配置序列化为JSON格式
 	configData, err := json.MarshalIndent(config, "", "  ")
@@ -81,26 +124,27 @@ func Write(config *Config) error {
 		return fmt.Errorf("序列化配置失败: %v", err)
 	}
 
-	// 写入配置文件
-	err = os.WriteFile(ConfigFile, configData, 0644)
+	// 加密并写入配置文件
+	err = WriteEncrypted(ConfigFile, configData)
 	if err != nil {
-		return fmt.Errorf("写入配置文件失败: %v", err)
+		return fmt.Errorf("写入加密配置文件失败: %v", err)
 	}
-	fmt.Println("写入配置文件成功")
+
+	logger.Info("写入加密配置文件成功")
 	return nil
 }
 
-// Read 从文件中读取配置
+// Read 从加密文件中读取配置
 func Read() (*Config, error) {
 	// 检查配置文件是否存在
 	if _, err := os.Stat(ConfigFile); os.IsNotExist(err) {
 		return nil, fmt.Errorf("配置文件不存在: %v", err)
 	}
 
-	// 读取配置文件内容
-	file, err := os.ReadFile(ConfigFile)
+	// 读取并解密配置文件内容
+	file, err := ReadEncrypted(ConfigFile)
 	if err != nil {
-		return nil, fmt.Errorf("读取配置文件失败: %v", err)
+		return nil, fmt.Errorf("读取加密配置文件失败: %v", err)
 	}
 
 	// 解析JSON配置
@@ -109,51 +153,87 @@ func Read() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("解析配置文件失败: %v", err)
 	}
-	fmt.Println("config:", config)
 
-	return config, nil // 返回读取的配置
+	logger.Info("成功读取配置")
+	return config, nil
 }
 
-// SetValue 异步设置单个配置值
-func SetValue(key string, value string) chan error {
-	result := make(chan error) // 创建结果通道
+func (cm *ConfigManager) UpdateConfig(newConfig *Config) error {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
 
+	if err := Write(newConfig); err != nil {
+		logger.Error("写入配置失败: %v", err)
+		return err
+	}
+	cm.config = newConfig
+	logger.Info("配置已更新")
+	return nil
+}
+
+// startFileWatcher 启动文件变化监听
+func (cm *ConfigManager) startFileWatcher() error {
+	var err error
+	cm.watcher, err = fsnotify.NewWatcher()
+	if err != nil {
+		return fmt.Errorf("创建文件监听器失败: %v", err)
+	}
+
+	// 启动协程处理文件事件
 	go func() {
-		config, err := Read() // 读取当前配置
-		if err != nil {
-			fmt.Println("读取配置失败:", err)
-			result <- fmt.Errorf("读取配置失败: %v", err)
-			return
+		for {
+			select {
+			case event, ok := <-cm.watcher.Events:
+				if !ok {
+					logger.Error("文件监听通道已关闭")
+					return
+				}
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					logger.Info("检测到配置文件变化: %s", event.Name)
+					// 重新加载配置
+					if err := cm.reloadConfig(); err != nil {
+						logger.Error("重新加载配置失败: %v", err)
+					} else {
+						logger.Info("配置已重新加载")
+					}
+				}
+			case err, ok := <-cm.watcher.Errors:
+				if !ok {
+					logger.Error("文件监听错误通道已关闭")
+					return
+				}
+				logger.Error("文件监听错误: %v", err)
+			}
 		}
-
-		// 使用反射动态设置字段值
-		v := reflect.ValueOf(config).Elem()
-		field := v.FieldByName(cases.Title(language.Und).String(key)) // 获取字段
-		fmt.Println("field:", field)
-		if !field.IsValid() {
-			fmt.Println("未知的配置项:", key)
-			result <- fmt.Errorf("未知的配置项: %s", key)
-			return
-		}
-
-		if field.Kind() == reflect.String {
-			fmt.Println("设置配置项:", key, value)
-			field.SetString(value) // 设置字段值
-		} else {
-			fmt.Printf("配置项 %s 类型不是字符串\n", key)
-			result <- fmt.Errorf("配置项 %s 类型不是字符串", key)
-			return
-		}
-
-		if err := Write(config); err != nil { // 写入更新后的配置
-			fmt.Println("写入配置失败:", err)
-			result <- err
-			return
-		}
-
-		result <- nil // 返回成功
 	}()
 
-	fmt.Println("设置配置完成")
-	return result // 返回结果通道
+	// 添加配置文件到监听
+	err = cm.watcher.Add(ConfigFile)
+	if err != nil {
+		return fmt.Errorf("添加文件监听失败: %v", err)
+	}
+	logger.Info("已启动对配置文件 %s 的监听", ConfigFile)
+	return nil
+}
+
+// reloadConfig 重新加载配置
+func (cm *ConfigManager) reloadConfig() error {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+
+	config, err := Read()
+	if err != nil {
+		return fmt.Errorf("读取配置文件失败: %v", err)
+	}
+
+	cm.config = config
+	return nil
+}
+
+// Close 关闭文件监听器
+func (cm *ConfigManager) Close() error {
+	if cm.watcher != nil {
+		return cm.watcher.Close()
+	}
+	return nil
 }

@@ -6,10 +6,10 @@ toolchain go1.24.2
 
 require (
 	github.com/energye/systray v1.0.2
+	github.com/fsnotify/fsnotify v1.8.0
 	github.com/pkg/errors v0.9.1
 	github.com/v2fly/v2ray-core/v5 v5.30.0
 	github.com/wailsapp/wails/v2 v2.10.1
-	golang.org/x/text v0.23.0
 )
 
 require (
@@ -72,6 +72,7 @@ require (
 	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/tools v0.30.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f // indirect
 	google.golang.org/grpc v1.71.1 // indirect

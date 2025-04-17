@@ -12,7 +12,7 @@ const (
 // 保护状态变量的读写锁
 var (
 	mu     sync.RWMutex                  // 读写锁，用于保护状态的并发访问
-	status int          = StatusInActive // 当前状态，初始为非活动状态
+	status int          = StatusInActive // 当前状态，初始为活动状态
 )
 
 // GetStatus 获取当前状态

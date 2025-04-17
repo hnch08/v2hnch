@@ -31,7 +31,8 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	logger.Info("=================应用程序启动初始化=================")
 
-	conf := config.GetConfig()
+	cm := config.GetConfigManager()
+	conf := cm.GetConfig()
 	if conf.RequestURL == "" && conf.Username != "" {
 		logger.Info("显示窗口：用户名存在但URL为空")
 		a.ShowWindow()
@@ -74,6 +75,7 @@ func (a *App) startup(ctx context.Context) {
 		systray.SetOnClick(func(menu systray.IMenu) { a.ShowWindow() })   // 点击托盘图标，显示窗口
 		systray.SetOnRClick(func(menu systray.IMenu) { menu.ShowMenu() }) // 右键点击托盘图标，显示菜单
 	}
+
 	systray.Run(systemTray, func() {}) // 运行系统托盘
 
 }
@@ -87,7 +89,7 @@ func (a *App) beforeClose(ctx context.Context) bool {
 
 // GetConfig 获取配置
 func (a *App) GetConfig() *config.Config {
-	return config.GetConfig() // 返回配置
+	return config.GetConfigManager().GetConfig() // 返回配置
 }
 
 // SetAddress 设置地址
@@ -97,10 +99,11 @@ func (a *App) SetAddress(address string) bool {
 		logger.Error("URL地址无效: %s", address)
 		return false
 	}
-	conf := config.GetConfig()
+	cm := config.GetConfigManager()
+	conf := cm.GetConfig()
 	conf.RequestURL = address
 	logger.Info("更新配置中的URL地址")
-	if err := config.Write(conf); err != nil {
+	if err := cm.UpdateConfig(conf); err != nil {
 		logger.Error("写入配置失败: %v", err)
 		return false
 	}
@@ -110,7 +113,8 @@ func (a *App) SetAddress(address string) bool {
 
 // CheckURL 检查 URL 是否有效
 func (a *App) CheckURL() bool {
-	conf := config.GetConfig() // 获取配置
+	cm := config.GetConfigManager()
+	conf := cm.GetConfig()     // 获取配置
 	if conf.RequestURL == "" { // 如果请求 URL 为空
 		return false // 返回 false
 	}
@@ -119,7 +123,14 @@ func (a *App) CheckURL() bool {
 
 // GetStatus 获取状态
 func (a *App) GetStatus() int {
+	logger.Info("获取代理状态")
+	logger.Info("代理状态: %d", config.GetStatus())
 	return config.GetStatus() // 返回状态
+}
+
+// GetLoginStatus 获取登录状态
+func (a *App) GetLoginStatus() bool {
+	return config.GetConfigManager().GetConfig().Username != ""
 }
 
 // StartProxy 启动代理
@@ -145,7 +156,8 @@ func (a *App) toggleProxy(status ...int) bool {
 // onSecondInstanceLaunch 当应用被第二次启动时调用
 func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceData) {
 	logger.Info("检测到第二个实例启动")
-	conf := config.GetConfig()
+	cm := config.GetConfigManager()
+	conf := cm.GetConfig() // 获取配置
 	if conf.RequestURL == "" && conf.Username != "" {
 		logger.Info("显示窗口：用户名存在但URL为空")
 		a.ShowWindow()
