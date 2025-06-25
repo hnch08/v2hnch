@@ -12,6 +12,8 @@ import (
 	core "github.com/v2fly/v2ray-core/v5"
 	_ "github.com/v2fly/v2ray-core/v5/app/proxyman/inbound"
 	_ "github.com/v2fly/v2ray-core/v5/app/proxyman/outbound"
+	_ "github.com/v2fly/v2ray-core/v5/infra/conf/geodata/memconservative"
+	_ "github.com/v2fly/v2ray-core/v5/infra/conf/geodata/standard"
 	_ "github.com/v2fly/v2ray-core/v5/main/formats"
 )
 

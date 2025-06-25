@@ -88,6 +88,10 @@ Section
 
     !insertmacro wails.files
 
+    File "..\..\..\resources\geoip.dat"
+    File "..\..\..\resources\geosite.dat"
+    File "..\..\..\resources\geoip-only-cn-private.dat"
+
     CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
 #   CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
 

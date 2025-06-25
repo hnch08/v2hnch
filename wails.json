@@ -6,6 +6,7 @@
   "frontend:build": "pnpm build",
   "frontend:dev:watcher": "pnpm dev",
   "frontend:dev:serverUrl": "auto",
+  "assetdir": "./resources",
   "author": {
     "name": "Hnch",
     "email": "19973371929@189.com"
