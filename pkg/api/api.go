@@ -28,7 +28,7 @@ type VpnConfigResponse struct {
 
 const PacAddr = "http://cdn.hnch.net/pac.js"
 
-const VpnURL = "http://218.75.223.27:8008/api/vpn/"
+const VpnURL = "http://124.232.157.50:8008/api/vpn/"
 
 // Login 发送登录请求到指定路径
 func Login(username, password, loginURL string) (bool, error) {
