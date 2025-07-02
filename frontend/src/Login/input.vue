@@ -10,7 +10,6 @@
                 </path>
             </svg>
         </button>
-        {{ disabled }}
     </div>
 </template>
 <script setup lang="ts">

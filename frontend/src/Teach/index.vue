@@ -13,15 +13,15 @@
                 <div class="step">
                     <div class="step-number">1</div>
                     <div class="step-text">
-                        <h3>服务器已开机</h3>
-                        <p>确保服务器已开机，并确保您的电脑和设备在同一局域网内</p>
+                        <h3>打开网站</h3>
+                        <p>使用ip+端口(或者域名)打开网站</p>
                     </div>
                 </div>
                 <div class="step">
                     <div class="step-number">2</div>
                     <div class="step-text">
                         <h3>输入账号密码并登录</h3>
-                        <p>在浏览器中打开系统登录界面，在登录界面输入账号和密码，点击"登录"按钮即可</p>
+                        <p>在登录界面输入账号和密码，点击"登录"按钮即可</p>
                     </div>
                 </div>
                 <div class="step-image">
@@ -40,22 +40,22 @@
                 <div class="step">
                     <div class="step-number">4</div>
                     <div class="step-text">
-                        <h3>获知服务器IP地址</h3>
-                        <p>在客户端使用网站上查看服务器IP地址</p>
+                        <h3>获知服务器IP地址(或者域名)</h3>
+                        <p>在客户端使用网站上查看服务器IP地址(或者域名)</p>
                     </div>
-                    <div class="step-image">
-                        <img src="./img/ip.png" alt="查看IP地址示意图">
-                    </div>
+                </div>
+                <div class="step-image">
+                    <img src="./img/ip.png" alt="查看IP地址示意图">
                 </div>
                 <div class="step">
                     <div class="step-number">5</div>
                     <div class="step-text">
-                        <h3>输入IP地址并连接</h3>
-                        <p>将设备IP地址输入到连接界面的输入框中，点击"连接"按钮即可</p>
+                        <h3>输入IP地址(或者域名)并连接</h3>
+                        <p>将设备IP地址(或者域名)输入到连接界面的输入框中，点击"连接"按钮即可</p>
                     </div>
-                    <div class="step-image">
-                        <img src="./img/lj.png" alt="连接示意图">
-                    </div>
+                </div>
+                <div class="step-image">
+                    <img src="./img/lj.png" alt="连接示意图">
                 </div>
                 <div class="step">
                     <div class="step-number">6</div>

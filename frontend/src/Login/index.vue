@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import cinput from './input.vue'
 import Connected from '../Connected/index.vue'
 import Logo from '../assets/images/logochzn.png'
@@ -28,9 +28,13 @@ const handleConnect = async (ipAddress: string) => {
     } finally {
     }
 }
-const changeConnectStatus = (status: number) => {
+const changeConnectStatus = async (status: number) => {
     connectStatus.value = status
+    if (status === 1) {
+        await window.go.main.App.StopProxy()
+    }
 }
+
 const goTeach = () => {
     emit('goTeach')
 }
@@ -45,13 +49,23 @@ onMounted(async () => {
     connectStatus.value = config.requestURL !== '' ? 2 : 1
     getLoginStatus()
 })
+window.runtime.EventsOn('proxyStatusChange', (status) => {
+    connectStatus.value = status === 1 ? 2 : 1
+})
+let timer: any
 const getLoginStatus = async () => {
     const result = await window.go.main.App.GetLoginStatus()
     isLogin.value = result
-    setTimeout(() => {
+    if (!result) {
+        connectStatus.value = 1
+    }
+    timer = setTimeout(() => {
         getLoginStatus()
-    }, 2000)
+    }, 5000)
 }
+onUnmounted(() => {
+    clearTimeout(timer)
+})
 </script>
 
 <template>
@@ -67,7 +81,7 @@ const getLoginStatus = async () => {
             {{ errorMessage }}
         </div>
         <div v-if="!isLogin" class="error-message">
-            检测到您未从系统官网登录，请从官网登录,
+            检测到您未从系统官网登录，请从官网登录，
             <span class="teach-link" @click="goTeach">
                 登录教程
             </span>
@@ -104,6 +118,10 @@ const getLoginStatus = async () => {
 .teach-link {
     color: #0066cc;
     cursor: pointer;
+}
+
+.teach-link:hover {
+    text-decoration: underline;
 }
 
 .content-box {

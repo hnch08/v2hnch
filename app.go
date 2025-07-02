@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"v2hnch/pkg/config" // 导入配置包
+	wrong "v2hnch/pkg/error"
 	"v2hnch/pkg/logger"
 	"v2hnch/pkg/server" // 导入服务器包
 
@@ -38,8 +40,25 @@ func (a *App) startup(ctx context.Context) {
 		a.ShowWindow()
 	}
 	if conf.RequestURL != "" && conf.Username != "" {
-		logger.Info("启动代理：用户名和URL都存在")
-		a.StartProxy()
+		err := server.CheckUser(conf.RequestURL, conf.Username)
+		if err == nil {
+			logger.Info("启动代理：用户名和URL都存在")
+			a.StartProxy()
+		} else if errors.Is(err, wrong.ErrConnectionFailed) {
+			logger.Info("无法连接到服务器")
+			a.ShowWindow()
+		} else if errors.Is(err, wrong.ErrUserNotActive) {
+			logger.Info("用户未激活或不存在")
+			conf.Username = ""
+			conf.Name = ""
+			if err := cm.UpdateConfig(conf); err != nil {
+				logger.Error("写入配置失败: %v", err)
+			}
+			a.ShowWindow()
+		} else {
+			// 处理其他未预料到的错误
+			logger.Info("验证用户失败: 发生未知错误: %v", err)
+		}
 	}
 
 	systemTray := func() { // 定义系统托盘函数

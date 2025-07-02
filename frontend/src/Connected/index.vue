@@ -13,7 +13,6 @@ const loading = ref(false)
 const proxyEnabled = ref(false)
 
 const toggleProxy = async () => {
-    loading.value = true
     proxyEnabled.value = !proxyEnabled.value
     let result = false
     if (proxyEnabled.value) {
@@ -24,7 +23,6 @@ const toggleProxy = async () => {
     if (!result) {
         proxyEnabled.value = !proxyEnabled.value
     }
-    loading.value = false
 }
 
 
@@ -37,8 +35,10 @@ onMounted(async () => {
     const config = await window.go.main.App.GetConfig()
     userInfo.value.phoneNumber = config.username
     userInfo.value.nickname = config.name
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    loading.value = true
+    await new Promise((resolve) => setTimeout(resolve, 3000))
     const status = await window.go.main.App.GetStatus()
+    loading.value = false
     proxyEnabled.value = status === 1
 })
 
@@ -60,16 +60,18 @@ window.runtime.EventsOn('proxyStatusChange', (status) => {
 
         <!-- 中间代理状态 -->
         <div class="proxy-status">
-            <div class="status-icon" :class="{ active: proxyEnabled }">
+            <div class="status-icon" :class="{ active: proxyEnabled, loading }">
                 <i class="status-dot"></i>
             </div>
-            <div class="status-text">{{ proxyEnabled ? '代理已开启' : '代理未开启' }}</div>
+            <div class="status-text">{{ loading ? '获取代理状态' : proxyEnabled ? '代理已开启' : '代理未开启' }}</div>
         </div>
 
         <!-- 底部开关按钮 -->
         <div class="footer">
-            <div class="toggle-switch" @click="toggleProxy" :class="{ active: proxyEnabled }">
-                <div class="toggle-button"></div>
+            <div class="toggle-switch" @click="toggleProxy" :class="{ active: proxyEnabled, loading }">
+                <div class="toggle-button">
+                    <div class="loading-spinner"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -157,6 +159,10 @@ window.runtime.EventsOn('proxyStatusChange', (status) => {
     background: #e8f5e9;
 }
 
+.status-icon.loading {
+    background: #e6edf5;
+}
+
 .status-dot {
     width: 24px;
     height: 24px;
@@ -166,6 +172,11 @@ window.runtime.EventsOn('proxyStatusChange', (status) => {
 
 .status-icon.active .status-dot {
     background: #34c759;
+}
+
+.status-icon.loading .status-dot {
+    background: #007aff;
+
 }
 
 .status-text {
@@ -194,15 +205,55 @@ window.runtime.EventsOn('proxyStatusChange', (status) => {
     background-color: #34c759;
 }
 
+.toggle-switch.loading {
+    background-color: #007aff;
+    cursor: not-allowed;
+}
+
 .toggle-button {
     width: 22px;
     height: 22px;
     background-color: white;
     border-radius: 50%;
     transition: transform 0.3s;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .toggle-switch.active .toggle-button {
     transform: translateX(37px);
+}
+
+.toggle-switch.loading .toggle-button {
+    transform: translateX(19px);
+    /* 居中位置 */
+}
+
+/* Loading 旋转动画 */
+.loading-spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid #e9e9ea;
+    border-top: 2px solid #007aff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.toggle-switch.loading .loading-spinner {
+    opacity: 1;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 </style>
