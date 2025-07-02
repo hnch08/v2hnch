@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 	"v2hnch/pkg/config" // 导入配置包
 	wrong "v2hnch/pkg/error"
 	"v2hnch/pkg/logger"
@@ -17,12 +18,16 @@ import (
 
 // App struct 定义应用结构体
 type App struct {
-	ctx context.Context // 应用上下文
+	ctx    context.Context // 应用上下文
+	ticker *time.Ticker
+	done   chan bool
 }
 
 // NewApp creates a new App application struct 创建一个新的 App 应用结构体
 func NewApp() *App {
-	return &App{} // 返回 App 结构体指针
+	return &App{
+		done: make(chan bool),
+	} // 返回 App 结构体指针
 }
 
 // startup is called when the app starts. The context is saved
@@ -31,6 +36,7 @@ func NewApp() *App {
 // 这样我们就可以调用运行时方法
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	a.startDailyTask()
 	logger.Info("=================应用程序启动初始化=================")
 
 	cm := config.GetConfigManager()
@@ -103,6 +109,10 @@ func (a *App) startup(ctx context.Context) {
 func (a *App) beforeClose(ctx context.Context) bool {
 	logger.Info("应用程序准备关闭")
 	a.StopProxy()
+	if a.ticker != nil {
+		a.ticker.Stop()
+	}
+	a.done <- true
 	return false
 }
 
@@ -209,4 +219,67 @@ func (a *App) ShowWindow() {
 func (a *App) Quit() {
 	logger.Info("用户请求退出应用")
 	runtime.Quit(a.ctx) // 退出应用
+}
+
+func (a *App) startDailyTask() {
+	go func() {
+		for {
+			now := time.Now()
+			// 计算到下一个午夜0点的时间
+			nextMidnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+			duration := nextMidnight.Sub(now)
+
+			timer := time.NewTimer(duration)
+
+			select {
+			case <-timer.C:
+				// 执行你的定时任务
+				a.executeScheduledTask()
+
+				// 设置每24小时执行一次
+				a.ticker = time.NewTicker(24 * time.Hour)
+				for {
+					select {
+					case <-a.ticker.C:
+						a.executeScheduledTask()
+					case <-a.done:
+						return
+					}
+				}
+			case <-a.done:
+				timer.Stop()
+				return
+			}
+		}
+	}()
+}
+
+func (a *App) executeScheduledTask() {
+	// 这里写你要定时执行的逻辑
+	cm := config.GetConfigManager()
+	conf := cm.GetConfig()
+	if conf.RequestURL != "" && conf.Username != "" {
+		err := server.CheckUser(conf.RequestURL, conf.Username)
+		if err == nil {
+			logger.Info("用户正常")
+		} else if errors.Is(err, wrong.ErrConnectionFailed) {
+			logger.Info("无法连接到服务器")
+			a.StopProxy()
+			runtime.EventsEmit(a.ctx, "proxyStatusChange", 2)
+		} else if errors.Is(err, wrong.ErrUserNotActive) {
+			logger.Info("用户未激活或不存在")
+			conf.Username = ""
+			conf.Name = ""
+			if err := cm.UpdateConfig(conf); err != nil {
+				logger.Error("写入配置失败: %v", err)
+			}
+			a.StopProxy()
+			runtime.EventsEmit(a.ctx, "proxyStatusChange", 2)
+		} else {
+			// 处理其他未预料到的错误
+			logger.Info("验证用户失败: 发生未知错误: %v", err)
+			a.StopProxy()
+			runtime.EventsEmit(a.ctx, "proxyStatusChange", 2)
+		}
+	}
 }
