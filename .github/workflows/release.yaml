@@ -55,13 +55,13 @@ jobs:
           echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       # --- Install Dependencies ---
-      - name: Install Dependencies for ${{ runner.os }} (${{ matrix.arch }})
-        shell: ${{ runner.os == 'Windows' && 'pwsh' || 'bash' }}
+      - name: Install Dependencies for ${{ matrix.os_type }} (${{ matrix.arch }})
+        shell: ${{ matrix.os_type == 'windows' && 'pwsh' || 'bash' }}
         run: |
-          echo "Setting up environment for ${{ runner.os }} (${{ matrix.arch }})..."
+          echo "Setting up environment for ${{ matrix.os_type }} (${{ matrix.arch }})..."
           # 安装 Wails CLI
           go install github.com/wailsapp/wails/v2/cmd/wails@latest
-          if [[ "${{ runner.os }}" == "Linux" ]]; then
+          if [[ "${{ matrix.os_type }}" == "linux" ]]; then
             echo "Updating CA certificates..."
             sudo apt-get update && sudo apt-get install -y ca-certificates
             sudo update-ca-certificates
@@ -82,9 +82,9 @@ jobs:
         shell: bash
 
       # --- Build Step ---
-      - name: Build ${{ matrix.os }} (${{ matrix.arch }})
+      - name: Build ${{ matrix.os_type }} (${{ matrix.arch }})
         run: |
-          echo "Building for ${{ matrix.os }} (${{ matrix.arch }}) with tag: ${{ env.VERSION }}"
+          echo "Building for ${{ matrix.os_type }} (${{ matrix.arch }}) with tag: ${{ env.VERSION }}"
           ${{ matrix.build_command }}
         shell: bash # 确保在 bash 中运行
 
