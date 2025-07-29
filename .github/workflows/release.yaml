@@ -51,27 +51,29 @@ jobs:
           go-version: "1.20" # 你可以根据需要调整 Go 版本
 
       - name: Set Tag as Environment Variable
-        run: |
+        run:
           echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      # --- Install Dependencies ---
-      - name: Install Dependencies for ${{ matrix.os_type }} (${{ matrix.arch }})
-        shell: ${{ matrix.os_type == 'windows' && 'pwsh' || 'bash' }}
+      # --- Install Dependencies for Linux ---
+      - name: Install Dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
-          echo "Setting up environment for ${{ matrix.os_type }} (${{ matrix.arch }})..."
-          # 安装 Wails CLI
+          echo "Setting up environment for Linux..."
           go install github.com/wailsapp/wails/v2/cmd/wails@latest
-          if [[ "${{ matrix.os_type }}" == "linux" ]]; then
-            echo "Updating CA certificates..."
-            sudo apt-get update && sudo apt-get install -y ca-certificates
-            sudo update-ca-certificates
-            # 安装 nfpm
-            echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
-            sudo apt update
-            sudo apt install nfpm
-            # 如果你的项目需要其他系统依赖，可以在这里添加
-            # sudo apt-get update && sudo apt-get install -y --no-install-recommends build-essential
-          fi
+          sudo apt-get update && sudo apt-get install -y ca-certificates
+          sudo update-ca-certificates
+          echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
+          sudo apt update
+          sudo apt install nfpm
+        shell: bash
+
+      # --- Install Dependencies for Windows ---
+      - name: Install Dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          echo "Setting up environment for Windows..."
+          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+        shell: pwsh
 
       # --- Create Output Directory ---
       - name: Create dist directory
@@ -82,17 +84,19 @@ jobs:
         shell: bash
 
       # --- Build Step ---
-      - name: Build ${{ matrix.os_type }} (${{ matrix.arch }})
+      - name: Build ${{ matrix.os }} (${{ matrix.arch }})
         run: |
-          echo "Building for ${{ matrix.os_type }} (${{ matrix.arch }}) with tag: ${{ env.VERSION }}"
+          echo "Building for ${{ matrix.os }} (${{ matrix.arch }}) with tag: ${{ env.TAG }}"
           ${{ matrix.build_command }}
-        shell: bash # 确保在 bash 中运行
+        shell:
+          bash # 确保在 bash 中运行
 
-      # --- NFPM Package Step (Linux Only) ---
+
+          # --- NFPM Package Step (Linux Only) ---
       - name: Package for Linux (${{ matrix.arch }})
         if: matrix.os_type == 'linux' # 仅当 os_type 是 linux 时执行
         run: |
-          echo "Packaging for Linux (${{ matrix.arch }}) with tag: ${{ env.VERSION }}"
+          echo "Packaging for Linux (${{ matrix.arch }}) with tag: ${{ env.TAG }}"
           ${{ matrix.package_command }}
         shell: bash
 
