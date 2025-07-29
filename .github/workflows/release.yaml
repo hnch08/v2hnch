@@ -72,7 +72,6 @@ jobs:
             # 如果你的项目需要其他系统依赖，可以在这里添加
             # sudo apt-get update && sudo apt-get install -y --no-install-recommends build-essential
           fi
-        shell: bash # 确保在 bash 中运行
 
       # --- Create Output Directory ---
       - name: Create dist directory
