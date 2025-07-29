@@ -54,20 +54,17 @@ jobs:
         run:
           echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      - name: Update CA Certificates (for Ubuntu)
-        if: runner.os == 'Linux' # 只在 Linux runner 上执行
-        run: |
-          echo "Updating CA certificates..."
-          sudo apt-get update && sudo apt-get install -y ca-certificates
-          sudo update-ca-certificates
-
       # --- Install Dependencies ---
       - name: Install Dependencies for ${{ matrix.os_type }} (${{ matrix.arch }})
+        shell: ${{ runner.os == 'Windows' && 'pwsh' || 'bash' }}
         run: |
           echo "Setting up environment for ${{ matrix.os_type }} (${{ matrix.arch }})..."
           # 安装 Wails CLI
           go install github.com/wailsapp/wails/v2/cmd/wails@latest
-          if [[ "${{ matrix.os_type }}" == "linux" ]]; then
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            echo "Updating CA certificates..."
+            sudo apt-get update && sudo apt-get install -y ca-certificates
+            sudo update-ca-certificates
             # 安装 nfpm
             echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
             sudo apt update
