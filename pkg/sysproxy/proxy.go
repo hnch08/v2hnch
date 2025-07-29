@@ -14,6 +14,8 @@ import (
 func SetProxy(addr string) error {
 	logger.Info("开始设置Windows系统代理")
 
+	addr = "127.0.0.1:2081"
+
 	// 启用代理
 	enableCmd := exec.Command("reg", "add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyEnable", "/t", "REG_DWORD", "/d", "1", "/f")
 	enableCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
@@ -23,7 +25,7 @@ func SetProxy(addr string) error {
 	}
 
 	// 设置代理服务器地址
-	serverCmd := exec.Command("reg", "add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyServer", "/t", "REG_SZ", "/d", "127.0.0.1:2081", "/f")
+	serverCmd := exec.Command("reg", "add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyServer", "/t", "REG_SZ", "/d", addr, "/f")
 	serverCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} // 隐藏命令窗口
 	if err := serverCmd.Run(); err != nil {
 		logger.Error("设置系统代理服务器地址失败: %v", err)

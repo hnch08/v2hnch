@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=创合AI登录器
+Comment=创合AI登录器
+Exec=/usr/local/bin/v2hnch
+Icon=v2hnch-200
+Terminal=false
+Categories=Utility;
+MimeType=x-scheme-handler/v2hnch;

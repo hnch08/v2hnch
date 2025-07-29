@@ -41,6 +41,7 @@ func (a *App) startup(ctx context.Context) {
 
 	cm := config.GetConfigManager()
 	conf := cm.GetConfig()
+	a.ShowWindow()
 	if conf.RequestURL == "" && conf.Username != "" {
 		logger.Info("显示窗口：用户名存在但URL为空")
 		a.ShowWindow()

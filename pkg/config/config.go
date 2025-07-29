@@ -19,8 +19,15 @@ var (
 
 // 初始化配置目录和文件路径
 func init() {
-	ConfigDir = filepath.Join(os.Getenv("APPDATA"), "v2hnch") // 获取应用数据目录
-	ConfigFile = filepath.Join(ConfigDir, "config.enc")       // 配置文件路径，使用.enc扩展名表示加密文件
+	configDir := os.Getenv("APPDATA")
+	if configDir == "" {
+		// Linux/macOS 回退，通常使用 ~/.config
+		configDir = filepath.Join(os.Getenv("HOME"), ".config", "v2hnch")
+	} else {
+		configDir = filepath.Join(configDir, "v2hnch")
+	}
+	ConfigDir = configDir                               // 获取应用数据目录
+	ConfigFile = filepath.Join(ConfigDir, "config.enc") // 配置文件路径，使用.enc扩展名表示加密文件
 }
 
 // ConfigManager 管理配置，包含锁
