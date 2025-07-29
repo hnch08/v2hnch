@@ -59,9 +59,9 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           echo "Setting up environment for Linux..."
-          go install github.com/wailsapp/wails/v2/cmd/wails@latest
           sudo apt-get update && sudo apt-get install -y ca-certificates
           sudo update-ca-certificates
+          go install github.com/wailsapp/wails/v2/cmd/wails@latest
           echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
           sudo apt update
           sudo apt install nfpm
