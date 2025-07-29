@@ -51,7 +51,7 @@ jobs:
           go-version: "1.20" # 你可以根据需要调整 Go 版本
 
       - name: Set Tag as Environment Variable
-        run:
+        run: |
           echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       # --- Install Dependencies ---
@@ -84,17 +84,15 @@ jobs:
       # --- Build Step ---
       - name: Build ${{ matrix.os }} (${{ matrix.arch }})
         run: |
-          echo "Building for ${{ matrix.os }} (${{ matrix.arch }}) with tag: ${{ env.TAG }}"
+          echo "Building for ${{ matrix.os }} (${{ matrix.arch }}) with tag: ${{ env.VERSION }}"
           ${{ matrix.build_command }}
-        shell:
-          bash # 确保在 bash 中运行
+        shell: bash # 确保在 bash 中运行
 
-
-          # --- NFPM Package Step (Linux Only) ---
+      # --- NFPM Package Step (Linux Only) ---
       - name: Package for Linux (${{ matrix.arch }})
         if: matrix.os_type == 'linux' # 仅当 os_type 是 linux 时执行
         run: |
-          echo "Packaging for Linux (${{ matrix.arch }}) with tag: ${{ env.TAG }}"
+          echo "Packaging for Linux (${{ matrix.arch }}) with tag: ${{ env.VERSION }}"
           ${{ matrix.package_command }}
         shell: bash
 
