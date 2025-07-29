@@ -105,11 +105,10 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: |
-            # 根据 arch 和 os 判断路径
             ${{
               (matrix.arch == 'amd64' && contains(matrix.os, 'ubuntu')) && './dist/v2hnch_${{ env.VERSION }}_amd64.deb' ||
               (matrix.arch == 'arm64' && contains(matrix.os, 'ubuntu')) && './dist/v2hnch_${{ env.VERSION }}_arm64.deb' ||
               (matrix.arch == 'amd64' && matrix.os == 'windows-latest') && './build/bin/创合AI登录器.exe' ||
-              '' # 默认空，避免错误
+              ''
             }}
           if-no-files-found: error # 如果找不到文件则报错，方便调试
