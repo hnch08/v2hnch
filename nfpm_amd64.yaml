@@ -7,9 +7,9 @@
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 
 name: "v2hnch"
-arch: "arm64"
+arch: "amd64"
 platform: "linux"
-version: "1.1.5"
+version: "${{ env.VERSION }}"
 section: "net"
 priority: "optional"
 maintainer: "Hnch <19973371929@189.com>"

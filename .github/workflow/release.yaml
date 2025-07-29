@@ -1,0 +1,111 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go - Build with Wails
+
+on:
+  push:
+    tags:
+      - "v*.*.*" # 触发条件：当推送的 tag 以 'v' 开头，后面跟着三个数字（例如 v1.0.0）
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }} # 使用矩阵来指定运行的环境
+    container: ${{ matrix.container }} # 指定容器环境（用于 ARM64）
+    strategy:
+      matrix:
+        include:
+          # Linux AMD64
+          - os: ubuntu-latest
+            container:
+              image: ubuntu:latest # 默认使用 Ubuntu runner
+            arch: amd64
+            build_command: "wails build"
+            package_command: "nfpm pkg --packager deb --target ./dist -f ./nfpm_amd64.yaml"
+            artifact_name: "app-linux-amd64"
+            artifact_path: "./dist/v2hnch_${{ env.VERSION }}_${{ matrix.arch }}.deb" # 假设 Linux 可执行文件在此
+
+          # Linux ARM64 (使用 Docker 容器)
+          - os: ubuntu-latest # 仍然使用 ubuntu-latest runner 作为基础
+            container:
+              image: docker://arm64v8/ubuntu:latest # 使用 ARM64 的 Ubuntu Docker 镜像
+            arch: arm64
+            build_command: "wails build"
+            package_command: "nfpm pkg --packager deb --target ./dist -f ./nfpm_arm64.yaml"
+            artifact_name: "app-linux-arm64"
+            artifact_path: "./dist/v2hnch_${{ env.VERSION }}_${{ matrix.arch }}.deb" # 假设 Linux 可执行文件在此
+
+          # Windows AMD64
+          - os: windows-latest
+            container: # Windows runner 不需要指定 container image
+            arch: amd64
+            build_command: "wails build --nsis"
+            artifact_name: "app-windows-amd64-setup.exe"
+            artifact_path: "./build/bin/创合AI登录器.exe" # 假设 Windows 安装程序在此
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20" # 你可以根据需要调整 Go 版本
+
+      - name: Set Tag as Environment Variable
+        run:
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+          # --- Install Dependencies ---
+      - name: Install Dependencies for ${{ matrix.os_type }} (${{ matrix.arch }})
+        run: |
+          echo "Setting up environment for ${{ matrix.os_type }} (${{ matrix.arch }})..."
+          if [[ "${{ matrix.os_type }}" == "linux" ]]; then
+            # 安装 Wails CLI
+            go install github.com/wailsapp/wails/v2/cmd/wails@latest
+            # 安装 nfpm
+            echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
+            sudo apt update
+            sudo apt install nfpm
+            # 如果你的项目需要其他系统依赖，可以在这里添加
+            # sudo apt-get update && sudo apt-get install -y --no-install-recommends build-essential
+          fi
+        shell: bash # 确保在 bash 中运行
+
+      # --- Create Output Directory ---
+      - name: Create dist directory
+        run: |
+          if [[ "${{ matrix.os_type }}" == "linux" ]]; then
+            mkdir -p ./dist
+          fi
+        shell: bash
+
+      # --- Install Wails CLI ---
+      - name: Install Wails CLI for ${{ matrix.arch }}
+        run: |
+          echo "Installing Wails CLI for ${{ matrix.arch }}..."
+          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+        shell: bash # 确保在 bash 中运行
+
+      # --- Build Step ---
+      - name: Build ${{ matrix.os }} (${{ matrix.arch }})
+        run: |
+          echo "Building for ${{ matrix.os }} (${{ matrix.arch }}) with tag: ${{ env.TAG }}"
+          ${{ matrix.build_command }}
+        shell:
+          bash # 确保在 bash 中运行
+
+          # --- NFPM Package Step (Linux Only) ---
+      - name: Package for Linux (${{ matrix.arch }})
+        if: matrix.os_type == 'linux' # 仅当 os_type 是 linux 时执行
+        run: |
+          echo "Packaging for Linux (${{ matrix.arch }}) with tag: ${{ env.TAG }}"
+          ${{ matrix.package_command }}
+        shell: bash
+
+      # --- Upload Artifacts ---
+      - name: Upload Artifact for ${{ matrix.arch }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_path }}
+          if-no-files-found: error # 如果找不到文件则报错，方便调试

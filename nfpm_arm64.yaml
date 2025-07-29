@@ -1,0 +1,38 @@
+# This is an example nfpm configuration file.
+# Make sure to check the documentation at https://nfpm.goreleaser.com
+#
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://nfpm.goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+name: "v2hnch"
+arch: "arm64"
+platform: "linux"
+version: "${{ env.VERSION }}"
+section: "net"
+priority: "optional"
+maintainer: "Hnch <19973371929@189.com>"
+description: "创合AI登录器"
+vendor: "Hnch"
+homepage: "http://hnch.net"
+license: "MIT"
+contents:
+  - src: ./build/bin/v2hnch
+    dst: /usr/local/share/v2hnch/v2hnch
+  - src: ./resources/geoip.dat
+    dst: /usr/local/share/v2hnch/geoip.dat
+  - src: ./resources/geoip-only-cn-private.dat
+    dst: /usr/local/share/v2hnch/geoip-only-cn-private.dat
+  - src: ./resources/geosite.dat
+    dst: /usr/local/share/v2hnch/geosite.dat
+  - dst: /usr/local/bin/v2hnch
+    type: symlink
+    src: /usr/local/share/v2hnch/v2hnch
+  - src: ./appicon.png
+    dst: /usr/share/icons/hicolor/256x256/apps/v2hnch-200.png
+    type: config
+  - src: ./.desktop
+    dst: /usr/share/applications/v2hnch.desktop
+    type: config
+
