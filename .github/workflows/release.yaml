@@ -17,6 +17,7 @@ jobs:
         include:
           # Linux AMD64
           - os: ubuntu-latest
+            os_type: linux
             container:
               image: ubuntu:latest # 默认使用 Ubuntu runner
             arch: amd64
@@ -26,6 +27,7 @@ jobs:
 
           # Linux ARM64 (使用 Docker 容器)
           - os: ubuntu-latest # 仍然使用 ubuntu-latest runner 作为基础
+            os_type: linux
             container:
               image: docker://arm64v8/ubuntu:latest # 使用 ARM64 的 Ubuntu Docker 镜像
             arch: arm64
@@ -35,6 +37,7 @@ jobs:
 
           # Windows AMD64
           - os: windows-latest
+            os_type: windows
             arch: amd64
             build_command: "wails build --nsis"
             artifact_name: "app-windows-amd64-setup.exe"
@@ -51,7 +54,14 @@ jobs:
         run:
           echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-          # --- Install Dependencies ---
+      - name: Update CA Certificates (for Ubuntu)
+        if: runner.os == 'Linux' # 只在 Linux runner 上执行
+        run: |
+          echo "Updating CA certificates..."
+          sudo apt-get update && sudo apt-get install -y ca-certificates
+          sudo update-ca-certificates
+
+      # --- Install Dependencies ---
       - name: Install Dependencies for ${{ matrix.os_type }} (${{ matrix.arch }})
         run: |
           echo "Setting up environment for ${{ matrix.os_type }} (${{ matrix.arch }})..."
