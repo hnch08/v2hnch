@@ -1,35 +1,31 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
 name: Go - Build with Wails
 
 on:
   push:
     tags:
-      - "v*.*.*" # 触发条件：当推送的 tag 以 'v' 开头，后面跟着三个数字（例如 v1.0.0）
+      - "v*.*.*" # 触发条件：tag 以 'v' 开头，例如 v1.0.0
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }} # 使用矩阵来指定运行的环境
-    container: ${{ matrix.container }} # 指定容器环境（用于 ARM64）
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
     strategy:
       matrix:
         include:
           # Linux AMD64
           - os: ubuntu-latest
             os_type: linux
-            container:
-              image: ubuntu:latest # 默认使用 Ubuntu runner
+            container: null
             arch: amd64
             build_command: "wails build"
             package_command: "nfpm pkg --packager deb --target ./dist -f ./nfpm_amd64.yaml"
             artifact_name: "app-linux-amd64"
 
-          # Linux ARM64 (使用 Docker 容器)
-          - os: ubuntu-latest # 仍然使用 ubuntu-latest runner 作为基础
+          # Linux ARM64 (用 golang 官方镜像)
+          - os: ubuntu-latest
             os_type: linux
             container:
-              image: docker://arm64v8/ubuntu:latest # 使用 ARM64 的 Ubuntu Docker 镜像
+              image: golang:1.20-bullseye
             arch: arm64
             build_command: "wails build"
             package_command: "nfpm pkg --packager deb --target ./dist -f ./nfpm_arm64.yaml"
@@ -38,6 +34,7 @@ jobs:
           # Windows AMD64
           - os: windows-latest
             os_type: windows
+            container: null
             arch: amd64
             build_command: "wails build --nsis"
             artifact_name: "app-windows-amd64-setup.exe"
@@ -46,70 +43,57 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Go
+        if: matrix.container == null
         uses: actions/setup-go@v4
         with:
-          go-version: "1.20" # 你可以根据需要调整 Go 版本
+          go-version: "1.20"
 
       - name: Set Tag as Environment Variable
-        run:
-          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      # --- Install Dependencies for Linux ---
-      - name: Install Dependencies (Linux)
-        if: runner.os == 'Linux'
+      - name: Install Dependencies (Linux only)
+        if: matrix.os_type == 'linux'
         run: |
-          echo "Setting up environment for Linux..."
-          sudo apt-get update && sudo apt-get install -y ca-certificates
-          sudo update-ca-certificates
+          apt-get update
+          apt-get install -y ca-certificates curl gnupg
+          update-ca-certificates
+          # 安装 nfpm
+          echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | tee /etc/apt/sources.list.d/goreleaser.list
+          apt update
+          apt install -y nfpm
+          # 安装 Wails CLI
           go install github.com/wailsapp/wails/v2/cmd/wails@latest
-          echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
-          sudo apt update
-          sudo apt install nfpm
-        shell: bash
 
-      # --- Install Dependencies for Windows ---
-      - name: Install Dependencies (Windows)
-        if: runner.os == 'Windows'
+      - name: Install Dependencies (Windows only)
+        if: matrix.os_type == 'windows'
         run: |
-          echo "Setting up environment for Windows..."
+          echo "Installing Wails CLI for Windows..."
           go install github.com/wailsapp/wails/v2/cmd/wails@latest
         shell: pwsh
 
-      # --- Create Output Directory ---
-      - name: Create dist directory
+      - name: Create dist directory (Linux only)
+        if: matrix.os_type == 'linux'
+        run: mkdir -p ./dist
+
+      - name: Build Project
         run: |
-          if [[ "${{ matrix.os_type }}" == "linux" ]]; then
-            mkdir -p ./dist
-          fi
+          echo "Building for ${{ matrix.os }} (${{ matrix.arch }}) with version ${{ env.VERSION }}"
+          ${{ matrix.build_command }}
         shell: bash
 
-      # --- Build Step ---
-      - name: Build ${{ matrix.os }} (${{ matrix.arch }})
+      - name: Package with NFPM (Linux only)
+        if: matrix.os_type == 'linux'
         run: |
-          echo "Building for ${{ matrix.os }} (${{ matrix.arch }}) with tag: ${{ env.TAG }}"
-          ${{ matrix.build_command }}
-        shell:
-          bash # 确保在 bash 中运行
-
-
-          # --- NFPM Package Step (Linux Only) ---
-      - name: Package for Linux (${{ matrix.arch }})
-        if: matrix.os_type == 'linux' # 仅当 os_type 是 linux 时执行
-        run: |
-          echo "Packaging for Linux (${{ matrix.arch }}) with tag: ${{ env.TAG }}"
+          echo "Packaging for Linux (${{ matrix.arch }})"
           ${{ matrix.package_command }}
         shell: bash
 
-      # --- Upload Artifacts ---
-      - name: Upload Artifact for ${{ matrix.arch }}
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: |
-            ${{
-              (matrix.arch == 'amd64' && contains(matrix.os, 'ubuntu')) && './dist/v2hnch_${{ env.VERSION }}_amd64.deb' ||
-              (matrix.arch == 'arm64' && contains(matrix.os, 'ubuntu')) && './dist/v2hnch_${{ env.VERSION }}_arm64.deb' ||
-              (matrix.arch == 'amd64' && matrix.os == 'windows-latest') && './build/bin/创合AI登录器.exe' ||
-              ''
-            }}
-          if-no-files-found: error # 如果找不到文件则报错，方便调试
+            ${{ (matrix.os_type == 'linux' && matrix.arch == 'amd64') && './dist/v2hnch_${{ env.VERSION }}_amd64.deb' || '' }}
+            ${{ (matrix.os_type == 'linux' && matrix.arch == 'arm64') && './dist/v2hnch_${{ env.VERSION }}_arm64.deb' || '' }}
+            ${{ (matrix.os_type == 'windows') && './build/bin/创合AI登录器.exe' || '' }}
+          if-no-files-found: error
