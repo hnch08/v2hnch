@@ -33,6 +33,9 @@ jobs:
           #   platform: "darwin/universal"
           #   os: "macos-latest"
           #   nsis: false
+    
+    permissions:
+      packages: write
 
     runs-on: ${{ matrix.build.os }}
     steps:
