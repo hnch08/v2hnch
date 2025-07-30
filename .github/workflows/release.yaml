@@ -3,8 +3,8 @@ name: Wails build
 on:
   push:
     tags:
-    # Match any new tag
-      - '*'
+      # Match any new tag
+      - "*"
 
 env:
   # Necessary for most environments as build failure can occur due to OOM issues
@@ -13,22 +13,26 @@ env:
 jobs:
   build:
     strategy:
-    # Failure in one platform build won't impact the others
+      # Failure in one platform build won't impact the others
       fail-fast: false
       matrix:
         build:
-          - name: 'App'
-            platform:  'linux/amd64'
-            os: 'ubuntu-latest'
-          - name: 'App'
-            platform:  'linux/arm64'
-            os: 'ubuntu-24.04-arm'
-          - name: 'App'
-            platform:  'windows/amd64'
-            os: 'windows-latest'
-          - name: 'App'
-            platform:  'darwin/universal'
-            os: 'macos-latest'
+          - name: "App"
+            platform: "linux/amd64"
+            os: "ubuntu-latest"
+            nsis: false
+          - name: "App"
+            platform: "linux/arm64"
+            os: "ubuntu-24.04-arm"
+            nsis: false
+          - name: "App"
+            platform: "windows/amd64"
+            os: "windows-latest"
+            nsis: true
+          # - name: "App"
+          #   platform: "darwin/universal"
+          #   os: "macos-latest"
+          #   nsis: false
 
     runs-on: ${{ matrix.build.os }}
     steps:
@@ -43,5 +47,6 @@ jobs:
         with:
           build-name: ${{ matrix.build.name }}
           build-platform: ${{ matrix.build.platform }}
-          package: false
-          go-version: '1.24'
+          nsis: ${{ matrix.build.nsis }}
+          package: true
+          go-version: "1.24"
